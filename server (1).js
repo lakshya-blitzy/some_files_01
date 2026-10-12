@@ -1,3 +1,7 @@
+/** Responds to every HTTP request with "Hello, World!". */
+/** Responds to every HTTP request with "Hello, World!". */
+/** Responds to every HTTP request with "Hello, World!". */
+
 const _ = require('lodash');
 
 /** Responds to every HTTP request with "Hello, World!". */
