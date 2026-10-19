@@ -6,17 +6,17 @@
 
 ### 1.1.1 Project Overview
 
-The repository holds one minimal Node.js HTTP service. Its entire implementation is the file `server (1).js` at the repository root: five lines, 185 bytes, added in the repository's only commit (`f0ba73b`, "Add files via upload", 6 October 2026). The `main` and `0610_02` branches contain the same single file. There is no README, dependency manifest, lockfile, configuration, test suite, CI pipeline or documentation.
+The repository holds one minimal Node.js HTTP service. Its entire implementation is the file `server (1).js` at the repository root: ten lines, 426 bytes, first added in commit `f0ba73b` ("Add files via upload", 6 October 2026) and updated twice since. The file carries four JSDoc comments - three identical copies of `/** Responds to every HTTP request with "Hello, World!". */` on lines 1-3 and one on line 7 - and three executable statements on lines 5, 8-9 and 10. `README.md` at the root names the project `some_files_01` and gives the install step `npm install lodash` and the run step `node "server (1).js"`. The history holds nine commits: `main` is at `f0ba73b`, while `0610_02`, `origin/0610_02` and `HEAD` are at `93f60af`. Beyond that README there is no dependency manifest, lockfile, configuration, test suite, CI pipeline or documentation.
 
 When the file runs, it creates an HTTP server with Node.js's built-in `http` module, listens on TCP port 3000, and answers every request with the fixed plain-text body `Hello, World!\n`. The file also loads the third-party `lodash` package, never uses it, and declares it nowhere.
 
 | Attribute | Observed Value | Evidence |
 |---|---|---|
-| Language / module system | JavaScript, CommonJS (`require`) | `server (1).js` lines 1, 3 |
+| Language / module system | JavaScript, CommonJS (`require`) | `server (1).js` lines 5, 8 |
 | Runtime | Node.js; no version pinned in the repository | Absence of any manifest at the root |
-| Network listener | TCP port 3000, bound to all interfaces (`::`) | `server (1).js` line 5; runtime check |
-| Response | `200 OK`, body `Hello, World!\n` (14 bytes) | `server (1).js` line 4; runtime check |
-| Third-party dependency | `lodash`, bound to `_`, unused and undeclared | `server (1).js` line 1 |
+| Network listener | TCP port 3000, bound to all interfaces (`::`) | `server (1).js` line 10; runtime check |
+| Response | `200 OK`, body `Hello, World!\n` (14 bytes) | `server (1).js` line 9; runtime check |
+| Third-party dependency | `lodash`, bound to `_`, unused and undeclared | `server (1).js` line 5 |
 | Startup status from a clean checkout | Fails with `Cannot find module 'lodash'` | Runtime check |
 
 ### 1.1.2 Core Problem Addressed
@@ -27,16 +27,16 @@ The repository does not state a business problem. Its code does one thing: it br
 - a connectivity or smoke-test target whose response can be checked byte for byte;
 - a starting scaffold for building a real service.
 
-The file name and commit history suggest the file was uploaded ad hoc rather than developed inside the repository. The ` (1)` suffix is typical of a duplicate browser download, and the commit message "Add files via upload" is typical of a web upload. This is an inference from metadata, not a documented intent.
+The file name and commit history suggest the file was uploaded ad hoc rather than developed inside the repository. The ` (1)` suffix is typical of a duplicate browser download, and the commit message "Add files via upload" is typical of a web upload. The `README.md` added later records only the project name, the install step and the run step, so it states no intent either. This is an inference from metadata, not a documented intent.
 
 ### 1.1.3 Key Stakeholders and Users
 
-The repository identifies no stakeholders. The parties below are derived from the code and the git metadata.
+The repository identifies no stakeholders. The parties below are derived from the code, the README and the git metadata.
 
 | Stakeholder | Role Relative to the System | Basis |
 |---|---|---|
-| Repository author (`lakshya-blitzy`) | Contributed the only file and commit | Git commit `f0ba73b` |
-| Developers / maintainers | Run, read and extend the scaffold | Single-file source in `server (1).js` |
+| Repository author (`lakshya-blitzy`) | Contributed the first version of the service file and revised it twice | Git commits `f0ba73b`, `8fc5d62`, `ea9f159` |
+| Developers / maintainers | Run, read and extend the scaffold | Single-file source in `server (1).js`; install and run steps in `README.md` |
 | Operators | Start the process and provide the runtime, lodash and a free port 3000 | `listen(3000, …)` and `require('lodash')` in `server (1).js` |
 | HTTP clients | Any unauthenticated client that can reach port 3000 | Request handler ignores every request attribute |
 
@@ -48,8 +48,7 @@ The system has no business logic, data handling or user-facing features, so it p
 - **Deterministic output:** every request, whatever its method, path, headers or body, gets the same 14-byte response, which makes verification trivial.
 - **Fast comprehension:** the whole system can be read in seconds, which suits demonstration, onboarding and environment validation.
 
-One defect limits even this value. The `require('lodash')` on line 1 of `server (1).js` makes startup depend on a package that the repository neither declares nor uses. In a clean checkout the process exits before it starts listening.
-
+One defect limits even this value. The `require('lodash')` on line 5 of `server (1).js` makes startup depend on a package that the repository neither declares nor uses. In a clean checkout the process exits before it starts listening.
 
 ## 1.2 System Overview
 
@@ -61,17 +60,19 @@ The repository has no product positioning, target market or business documentati
 
 #### Current System Limitations
 
-The git history holds a single commit, so the system replaces or upgrades nothing. The limitations below belong to the current implementation in `server (1).js`. Each was confirmed by reading the code and running it.
+The git history holds nine commits, the newest of which (`93f60af`) is a merge, so the system replaces or upgrades nothing. The limitations below belong to the current implementation in `server (1).js`. Each was confirmed by reading the code and running it.
 
 | Limitation | Effect | Evidence |
 |---|---|---|
-| `lodash` required but undeclared (no `package.json`) | Startup fails with `MODULE_NOT_FOUND` unless lodash is installed externally | Line 1; no manifest at the root |
-| `lodash` binding `_` never used | The dependency adds risk and gives nothing | Lines 1–5 |
-| Port hard-coded to `3000`; no host argument | Changing the port means editing code; the server binds to all interfaces (`::`) | Line 5; runtime `server.address()` check |
-| Startup log advertises `http://127.0.0.1:3000/` | The message suggests a loopback-only bind that is not what happens | Line 5 |
-| No `Content-Type` or explicit status code set | Clients get `200 OK` with no declared media type | Line 4; runtime response headers |
-| No server `'error'` listener | A port conflict crashes the process (`EADDRINUSE :::3000`) | Line 5; runtime check |
-| File name contains a space and parentheses | The launch command must be quoted: `node "server (1).js"` | Repository root listing |
+| `lodash` required but undeclared (no `package.json`) | Startup fails with `MODULE_NOT_FOUND` unless lodash is installed externally | Line 5; no manifest at the root |
+| `lodash` binding `_` never used | The dependency adds risk and gives nothing | Lines 5–10 |
+| Port hard-coded to `3000`; no host argument | Changing the port means editing code; the server binds to all interfaces (`::`) | Line 10; runtime `server.address()` check |
+| Startup log advertises `http://127.0.0.1:3000/` | The message suggests a loopback-only bind that is not what happens | Line 10 |
+| No `Content-Type` or explicit status code set | Clients get `200 OK` with no declared media type | Line 9; runtime response headers |
+| No server `'error'` listener | A port conflict crashes the process (`EADDRINUSE :::3000`) | Line 10; runtime check |
+| File name contains a space and parentheses | The launch command must be quoted: `node "server (1).js"` | Repository root listing; the run step in `README.md` |
+
+`README.md` is the only file in the repository that states how to install and run the system: it gives `npm install lodash` and `node "server (1).js"`.
 
 #### Integration with the Existing Enterprise Landscape
 
@@ -88,21 +89,21 @@ The code connects to no enterprise system. It reads no environment variables or 
 
 | Capability | Behavior | Source |
 |---|---|---|
-| HTTP listening | Accepts HTTP/1.1 connections on port 3000, all interfaces | `server (1).js` line 5 |
-| Uniform response | Ends every response with `Hello, World!\n` | `server (1).js` line 4 |
-| Startup notification | Logs `Server running at http://127.0.0.1:3000/` once listening | `server (1).js` line 5 |
+| HTTP listening | Accepts HTTP/1.1 connections on port 3000, all interfaces | `server (1).js` line 10 |
+| Uniform response | Ends every response with `Hello, World!\n` | `server (1).js` line 9 |
+| Startup notification | Logs `Server running at http://127.0.0.1:3000/` once listening | `server (1).js` line 10 |
 | Connection reuse | Node.js defaults apply (`Connection: keep-alive`, `Keep-Alive: timeout=5`) | Runtime response headers |
 
 #### Major System Components
 
-The system has no classes, named functions or exports. It is made of the four inline elements below, all in `server (1).js`.
+The system has no classes, named functions or exports. It is made of the four inline elements below, all in `server (1).js`, each preceded by a JSDoc comment.
 
 | Component | Location | Responsibility |
 |---|---|---|
-| Lodash import | Line 1 | Loads `lodash` into `_`; its only effect is the startup dependency |
-| HTTP server factory | Line 3 | `require('http').createServer(...)` builds the server instance |
-| Request handler (anonymous arrow function) | Lines 3–4 | Ignores `req` and calls `res.end('Hello, World!\n')` |
-| Listener and startup callback | Line 5 | `.listen(3000, …)` opens the socket; the callback logs the startup URL |
+| Lodash import | Line 5 | Loads `lodash` into `_`; its only effect is the startup dependency |
+| HTTP server factory | Line 8 | `require('http').createServer(...)` builds the server instance |
+| Request handler (anonymous arrow function) | Lines 8–9 | Ignores `req` and calls `res.end('Hello, World!\n')` |
+| Listener and startup callback | Line 10 | `.listen(3000, …)` opens the socket; the callback logs the startup URL |
 
 #### Core Technical Approach
 
@@ -146,15 +147,14 @@ The repository defines no objectives, tests or acceptance criteria. The objectiv
 
 #### Critical Success Factors
 
-- **Dependency resolution:** `lodash` must be resolvable from the file's location, or line 1 of `server (1).js` must be removed. Nothing else blocks startup in a clean environment.
+- **Dependency resolution:** `lodash` must be resolvable from the file's location, or the `require('lodash')` on line 5 of `server (1).js` must be removed. Nothing else blocks startup in a clean environment.
 - **Runtime availability:** a Node.js runtime with CommonJS support. The repository pins no version; the behavior above was observed on Node.js v22.23.3.
 - **Port availability:** TCP port 3000 must be free on the host, because the code has no fallback or error handling.
-- **Correct invocation:** the file name must be quoted on the command line because it contains a space and parentheses.
+- **Correct invocation:** the file name must be quoted on the command line because it contains a space and parentheses, as the run step in `README.md` shows.
 
 #### Key Performance Indicators
 
 The code defines and instruments no KPIs. It emits no metrics, request logs, health endpoints or timing data. The only operational signals are the presence of the startup log line and the HTTP responses themselves. Any availability or latency KPI would have to be measured outside the process.
-
 
 ## 1.3 Scope
 
@@ -168,10 +168,10 @@ These are the only capabilities `server (1).js` implements, so all of them are i
 
 | Capability | Description | Source |
 |---|---|---|
-| HTTP server creation | Builds a server with the Node.js built-in `http` module | Line 3 |
-| Fixed-response handling | Returns `Hello, World!\n` for every request | Line 4 |
-| Port binding | Listens on TCP port 3000 on all interfaces | Line 5 |
-| Startup logging | Prints one readiness line to stdout | Line 5 |
+| HTTP server creation | Builds a server with the Node.js built-in `http` module | Line 8 |
+| Fixed-response handling | Returns `Hello, World!\n` for every request | Line 9 |
+| Port binding | Listens on TCP port 3000 on all interfaces | Line 10 |
+| Startup logging | Prints one readiness line to stdout | Line 10 |
 
 **Primary User Workflows**
 
@@ -185,16 +185,16 @@ These are the only capabilities `server (1).js` implements, so all of them are i
 
 | Integration | Type | Purpose | Evidence |
 |---|---|---|---|
-| Node.js `http` module | Built-in runtime module | HTTP server and request handling | Line 3 |
-| `lodash` | Third-party npm package | Loaded at startup; never used | Line 1 |
-| Standard output | Process stream | Startup message via `console.log` | Line 5 |
+| Node.js `http` module | Built-in runtime module | HTTP server and request handling | Line 8 |
+| `lodash` | Third-party npm package | Loaded at startup; never used | Line 5 |
+| Standard output | Process stream | Startup message via `console.log` | Line 10 |
 
 **Key Technical Requirements**
 
 - A Node.js runtime that executes CommonJS modules. No version is pinned; behavior was verified on Node.js v22.23.3.
-- `lodash` installed where Node.js module resolution can find it from the file's directory. The repository has no `package.json` to supply it.
+- `lodash` installed where Node.js module resolution can find it from the file's directory. The repository has no `package.json` to supply it; `README.md` documents the manual step as `npm install lodash`.
 - TCP port 3000 free on the host.
-- The file name `server (1).js` quoted when invoked.
+- The file name `server (1).js` quoted when invoked, as the run step `node "server (1).js"` in `README.md` shows.
 
 #### 1.3.1.2 Implementation Boundaries
 
@@ -224,8 +224,8 @@ flowchart LR
 
 | User Group | Coverage | Basis |
 |---|---|---|
-| Anonymous HTTP clients | Every client that can reach port 3000; no authentication or authorization | Handler ignores `req` (line 4) |
-| Operators / developers | Run the process manually from a shell | No scripts, service definitions or containers present |
+| Anonymous HTTP clients | Every client that can reach port 3000; no authentication or authorization | Handler ignores `req` (line 9) |
+| Operators / developers | Run the process manually from a shell, following the install and run steps in `README.md` | No scripts, service definitions or containers present |
 
 **Geographic and Market Coverage**
 
@@ -261,7 +261,7 @@ The capabilities below are absent from the repository. Each was confirmed agains
 
 The repository has no roadmap, issues or TODO markers. The work below is not planned anywhere. It is the work the code itself shows to be needed before the scaffold can grow:
 
-- declare `lodash` in a `package.json`, or remove the unused import on line 1;
+- declare `lodash` in a `package.json`, or remove the unused import on line 5;
 - make the port and bind host configurable, and make the startup message match the real bind address;
 - set an explicit status code and `Content-Type` on responses;
 - add a server `'error'` handler and graceful shutdown;
@@ -287,20 +287,19 @@ The repository has no roadmap, issues or TODO markers. The work below is not pla
 | Running on a port other than 3000 without code changes | The port is a hard-coded literal |
 | Running several instances on one host | The second instance crashes with `EADDRINUSE` |
 
-
 ## 1.4 References
 
-- `server (1).js` - The whole implementation: the unused, undeclared `lodash` import (line 1); HTTP server creation with Node.js's built-in `http` module (line 3); the fixed `Hello, World!\n` response handler (line 4); the hard-coded port 3000 listener and the startup log message (line 5).
-- `/` (repository root) - Contains only `server (1).js`. No README, `package.json`, lockfile, configuration, tests, CI or deployment files exist, which establishes the out-of-scope items and the missing-manifest limitation.
-- Git history (commit `f0ba73b`, branches `main` and `0610_02`) - A single commit, "Add files via upload", by `lakshya-blitzy` on 6 October 2026, adding the one file. Both branches have identical content.
+- `server (1).js` - The whole implementation: the unused, undeclared `lodash` import (line 5); HTTP server creation with Node.js's built-in `http` module (line 8); the fixed `Hello, World!\n` response handler (line 9); the hard-coded port 3000 listener and the startup log message (line 10). Four JSDoc comments (lines 1-3 and line 7) precede those statements and add no behavior.
+- `README.md` (repository root) - Names the project `some_files_01` and gives the install step `npm install lodash` and the run step `node "server (1).js"`. It is the only in-repo statement of how to install or run the system.
+- `/` (repository root) - On `0610_02` it holds `server (1).js`, `README.md` and the `blitzy/` documentation folder. No `package.json`, lockfile, configuration, tests, CI or deployment files exist, which establishes the out-of-scope items and the missing-manifest limitation.
+- Git history (nine commits; `main` at `f0ba73b`, `0610_02` and `origin/0610_02` at `93f60af`) - `f0ba73b` ("Add files via upload", by `lakshya-blitzy` on 6 October 2026) added `server (1).js`; `8fc5d62` and `ea9f159` revised it; `de89092` added `README.md`; the remaining commits add the Blitzy documentation, and `93f60af` is a merge. `main` still holds only `server (1).js`, while `0610_02` also holds `README.md` and the tracked specification, so the two branches no longer have identical content.
 - Runtime verification of `server (1).js` on Node.js v22.23.3 - Confirmed that startup fails with `Cannot find module 'lodash'` in a clean checkout; that the server returns `200 OK` with `Content-Length: 14` and no `Content-Type` for any method and path; that it binds to `::` port 3000; and that a second instance crashes with `EADDRINUSE`.
-
 
 # 2. Product Requirements
 
 ## 2.1 Feature Catalog
 
-The repository has no requirements documents, README, issue tracker content or roadmap. This catalog is therefore derived from the behavior of the only source file, `server (1).js`, as committed in `f0ba73b` (branches `main` and `0610_02`). It lists five features, one for each functional element of the file. All five are implemented. No feature is proposed or in development, and the future work listed in Section 1.3.2 is not planned anywhere in the repository, so the catalog leaves it out.
+The repository has no requirements documents, issue tracker content or roadmap. `README.md` exists but records only the project name and the install and run steps. This catalog is therefore derived from the behavior of the only source file, `server (1).js`, in its current form on `0610_02` (`93f60af`). It lists five features, one for each functional element of the file. All five are implemented. No feature is proposed or in development, and the future work listed in Section 1.3.2 is not planned anywhere in the repository, so the catalog leaves it out. The four JSDoc comments the file carries (lines 1-3 and line 7) restate the response behavior and implement nothing, so they add no feature.
 
 Priorities reflect each feature's role in serving the fixed HTTP response. The repository assigns no priorities of its own.
 
@@ -321,7 +320,7 @@ Priorities reflect each feature's role in serving the fixed HTTP response. The r
 | Feature Category | Core HTTP Infrastructure |
 | Priority Level | Critical |
 | Status | Completed |
-| Source | `server (1).js` line 3 |
+| Source | `server (1).js` line 8 |
 
 **Description**
 
@@ -334,7 +333,7 @@ Priorities reflect each feature's role in serving the fixed HTTP response. The r
 
 | Dependency Type | Dependency |
 |---|---|
-| Prerequisite Features | F-005: line 1 must succeed before line 3 runs |
+| Prerequisite Features | F-005: line 5 must succeed before line 8 runs |
 | System Dependencies | Node.js runtime that executes CommonJS. No version is pinned; behavior was verified on v22.23.3 |
 | External Dependencies | None. `http` is a Node.js built-in module |
 | Integration Requirements | Hosts F-002's handler as its request listener; F-003 binds this instance |
@@ -348,7 +347,7 @@ Priorities reflect each feature's role in serving the fixed HTTP response. The r
 | Feature Category | Request Processing |
 | Priority Level | Critical |
 | Status | Completed |
-| Source | `server (1).js` lines 3–4 |
+| Source | `server (1).js` lines 8–9 |
 
 **Description**
 
@@ -375,7 +374,7 @@ Priorities reflect each feature's role in serving the fixed HTTP response. The r
 | Feature Category | Network Connectivity |
 | Priority Level | Critical |
 | Status | Completed |
-| Source | `server (1).js` line 5 |
+| Source | `server (1).js` line 10 |
 
 **Description**
 
@@ -402,7 +401,7 @@ Priorities reflect each feature's role in serving the fixed HTTP response. The r
 | Feature Category | Observability / Operations |
 | Priority Level | Medium |
 | Status | Completed |
-| Source | `server (1).js` line 5 |
+| Source | `server (1).js` line 10 |
 
 **Description**
 
@@ -429,14 +428,14 @@ Priorities reflect each feature's role in serving the fixed HTTP response. The r
 | Feature Category | Dependency Management |
 | Priority Level | Low: it contributes no function, yet it blocks startup when missing |
 | Status | Completed as committed; declared in no manifest |
-| Source | `server (1).js` line 1 |
+| Source | `server (1).js` line 5 |
 
 **Description**
 
 - **Overview:** `const _ = require('lodash');` loads the lodash package into `_`. No later line references `_`.
 - **Business Value:** None observed. No functional code uses the package.
-- **User Benefits:** None. It adds a setup step that the repository does not document.
-- **Technical Context:** Node.js resolves `'lodash'` synchronously through its CommonJS lookup of `node_modules` folders, starting from the file's directory. The repository has no `package.json` or lockfile, so no version is pinned and any installed version satisfies the `require`. In a clean checkout the process throws `Error: Cannot find module 'lodash'` (`MODULE_NOT_FOUND`) and exits with code 1 before line 3 runs.
+- **User Benefits:** None. It adds a setup step that `README.md` documents in one line as `npm install lodash`, and that installs an unpinned version.
+- **Technical Context:** Node.js resolves `'lodash'` synchronously through its CommonJS lookup of `node_modules` folders, starting from the file's directory. The repository has no `package.json` or lockfile, so no version is pinned and any installed version satisfies the `require`. In a clean checkout the process throws `Error: Cannot find module 'lodash'` (`MODULE_NOT_FOUND`) and exits with code 1 before line 8 runs.
 
 **Dependencies**
 
@@ -475,9 +474,9 @@ Each requirement below states a behavior of `server (1).js` that can be tested. 
 
 | Rule Type | Rule | Evidence |
 |---|---|---|
-| Business Rules | One server per process, with no routing, middleware or framework | Line 3 |
+| Business Rules | One server per process, with no routing, middleware or framework | Line 8 |
 | Data Validation | Application code performs none. Node.js rejects oversized headers (`431`) before the handler runs | Runtime check |
-| Security Requirements | None implemented: plain `http` (not `https`), no authentication, no rate limiting | Line 3 |
+| Security Requirements | None implemented: plain `http` (not `https`), no authentication, no rate limiting | Line 8 |
 | Compliance Requirements | None defined; no data is processed | Repository root |
 
 ### 2.2.2 F-002: Uniform Fixed-Response Handling
@@ -506,10 +505,10 @@ Each requirement below states a behavior of `server (1).js` that can be tested. 
 
 | Rule Type | Rule | Evidence |
 |---|---|---|
-| Business Rules | One fixed response; no routing, content negotiation or localization | Line 4 |
-| Data Validation | None. Request data is never read | Line 4 |
-| Security Requirements | Application code consumes no request input. The response carries no security headers and no `Content-Type`. The endpoint is open to every client | Line 4; runtime headers |
-| Compliance Requirements | No personal or business data is read, stored or returned | Line 4 |
+| Business Rules | One fixed response; no routing, content negotiation or localization | Line 9 |
+| Data Validation | None. Request data is never read | Line 9 |
+| Security Requirements | Application code consumes no request input. The response carries no security headers and no `Content-Type`. The endpoint is open to every client | Line 9; runtime headers |
+| Compliance Requirements | No personal or business data is read, stored or returned | Line 9 |
 
 ### 2.2.3 F-003: TCP Listener on Port 3000
 
@@ -533,8 +532,8 @@ Each requirement below states a behavior of `server (1).js` that can be tested. 
 
 | Rule Type | Rule | Evidence |
 |---|---|---|
-| Business Rules | One listener on port 3000 per host | Line 5; `EADDRINUSE` check |
-| Data Validation | Not applicable: the port is a literal and takes no external input | Line 5 |
+| Business Rules | One listener on port 3000 per host | Line 10; `EADDRINUSE` check |
+| Data Validation | Not applicable: the port is a literal and takes no external input | Line 10 |
 | Security Requirements | None implemented. Binding to all interfaces exposes plaintext HTTP to every network path that reaches the host | Runtime `server.address()` check |
 | Compliance Requirements | None defined | Repository root |
 
@@ -560,10 +559,10 @@ Each requirement below states a behavior of `server (1).js` that can be tested. 
 
 | Rule Type | Rule | Evidence |
 |---|---|---|
-| Business Rules | The message is fixed, not derived from `server.address()` | Line 5 |
-| Data Validation | None | Line 5 |
-| Security Requirements | The message advertises `127.0.0.1`, but the server binds `::`, so the log understates network exposure | Line 5; runtime check |
-| Compliance Requirements | None defined. No audit or access trail exists | Line 5 |
+| Business Rules | The message is fixed, not derived from `server.address()` | Line 10 |
+| Data Validation | None | Line 10 |
+| Security Requirements | The message advertises `127.0.0.1`, but the server binds `::`, so the log understates network exposure | Line 10; runtime check |
+| Compliance Requirements | None defined. No audit or access trail exists | Line 10 |
 
 ### 2.2.5 F-005: Lodash Module Loading
 
@@ -573,7 +572,7 @@ Each requirement below states a behavior of `server (1).js` that can be tested. 
 |---|---|---|---|
 | F-005-RQ-001 | Resolve `lodash` through Node.js module resolution as the first statement, binding it to `_` | With lodash resolvable from the file's directory, execution continues to server creation (F-001) | Could-Have / Low |
 | F-005-RQ-002 | Abort startup when lodash cannot be resolved | In a clean checkout the process throws `Error: Cannot find module 'lodash'` (`MODULE_NOT_FOUND`), exits with code 1, never listens and prints no startup line | Could-Have / Low |
-| F-005-RQ-003 | Call no lodash API | `_` is not referenced on lines 2–5 | Could-Have / Low |
+| F-005-RQ-003 | Call no lodash API | `_` is not referenced on lines 6–10 | Could-Have / Low |
 
 **Technical Specifications**
 
@@ -587,25 +586,25 @@ Each requirement below states a behavior of `server (1).js` that can be tested. 
 
 | Rule Type | Rule | Evidence |
 |---|---|---|
-| Business Rules | lodash must load before the server is created, because of statement order | Lines 1 and 3 |
+| Business Rules | lodash must load before the server is created, because of statement order | Lines 5 and 8 |
 | Data Validation | No version or integrity check, because no manifest or lockfile exists | Repository root |
-| Security Requirements | Third-party code of unknown version runs at startup with full process privileges | Line 1; repository root |
+| Security Requirements | Third-party code of unknown version runs at startup with full process privileges | Line 5; repository root |
 | Compliance Requirements | The repository has no license file or dependency inventory, so the package's license terms are not recorded | Repository root |
 
 ## 2.3 Feature Relationships
 
-All five features sit in the five lines of `server (1).js`. Their relationships come from statement order and method chaining, not from module boundaries: the file defines no functions, classes or exports.
+All five features sit in the ten lines of `server (1).js`, four of which are JSDoc comments. Their relationships come from statement order and method chaining, not from module boundaries: the file defines no functions, classes or exports.
 
 ### 2.3.1 Feature Dependency Map
 
-Each feature depends only on the ones before it in execution order. If an upstream step fails, F-005 at line 1 or F-003's bind at line 5, nothing downstream runs.
+Each feature depends only on the ones before it in execution order. If an upstream step fails, F-005 at line 5 or F-003's bind at line 10, nothing downstream runs.
 
 ```mermaid
 flowchart LR
-    F005[F-005 Lodash Module Loading<br/>line 1] -->|must resolve before| F001[F-001 HTTP Server Initialization<br/>line 3]
-    F001 -->|registers request listener| F002[F-002 Uniform Fixed Response<br/>lines 3-4]
-    F001 -->|chained .listen call| F003[F-003 TCP Listener on Port 3000<br/>line 5]
-    F003 -->|listen callback on success| F004[F-004 Startup Readiness Logging<br/>line 5]
+    F005[F-005 Lodash Module Loading<br/>line 5] -->|must resolve before| F001[F-001 HTTP Server Initialization<br/>line 8]
+    F001 -->|registers request listener| F002[F-002 Uniform Fixed Response<br/>lines 8-9]
+    F001 -->|chained .listen call| F003[F-003 TCP Listener on Port 3000<br/>line 10]
+    F003 -->|listen callback on success| F004[F-004 Startup Readiness Logging<br/>line 10]
     F003 -->|delivers incoming requests| F002
 ```
 
@@ -636,10 +635,10 @@ Related process flowcharts in this specification:
 
 | Integration Point | Type | Features | Evidence |
 |---|---|---|---|
-| Node.js CommonJS module loader | Runtime service | F-005 (`lodash`), F-001 (`http`) | Lines 1, 3 |
-| Node.js `http` module | Built-in library | F-001, F-002, F-003 | Lines 3–5 |
-| TCP socket `::`, port 3000 | Network interface to HTTP clients | F-003, F-002 | Line 5; runtime check |
-| Process standard output | Output stream | F-004 | Line 5 |
+| Node.js CommonJS module loader | Runtime service | F-005 (`lodash`), F-001 (`http`) | Lines 5, 8 |
+| Node.js `http` module | Built-in library | F-001, F-002, F-003 | Lines 8–10 |
+| TCP socket `::`, port 3000 | Network interface to HTTP clients | F-003, F-002 | Line 10; runtime check |
+| Process standard output | Output stream | F-004 | Line 10 |
 
 The system makes no outbound connections and uses no databases, caches, queues, identity providers or external APIs (Section 1.2.1).
 
@@ -648,7 +647,7 @@ The system makes no outbound connections and uses no databases, caches, queues, 
 | Shared Component | Shared By | Nature of Sharing |
 |---|---|---|
 | The anonymous `http.Server` instance | F-001, F-002, F-003, F-004 | Created by F-001; holds F-002's listener; bound by F-003, which then fires F-004's callback. Nothing keeps a reference to it |
-| Line 5 of `server (1).js` | F-003, F-004 | Port `3000` appears twice, once in the `listen` call and once in the log string. The two values are independent literals |
+| Line 10 of `server (1).js` | F-003, F-004 | Port `3000` appears twice, once in the `listen` call and once in the log string. The two values are independent literals |
 | `server (1).js` | All features | The only source file; there is no modular separation |
 
 ### 2.3.4 Common Services
@@ -670,51 +669,51 @@ The considerations below come from the code as written in `server (1).js` and fr
 
 | Consideration | Detail | Evidence |
 |---|---|---|
-| Technical Constraints | No reference to the server is kept, so it cannot be closed, given handlers or reconfigured. The Node.js version is not pinned | Line 3; no manifest |
-| Performance Requirements | Construction is one synchronous call at startup. No tuning options are passed, so Node.js defaults apply | Line 3 |
-| Scalability Considerations | One process on one event-loop thread. No cluster or worker threads, so the server runs on a single CPU core | Line 3 |
-| Security Implications | Plain HTTP with no TLS, authentication or rate limiting. The only protections are Node.js defaults: a 16 KB header limit, a 60 s header timeout and a 300 s request timeout | Line 3; runtime check |
+| Technical Constraints | No reference to the server is kept, so it cannot be closed, given handlers or reconfigured. The Node.js version is not pinned | Line 8; no manifest |
+| Performance Requirements | Construction is one synchronous call at startup. No tuning options are passed, so Node.js defaults apply | Line 8 |
+| Scalability Considerations | One process on one event-loop thread. No cluster or worker threads, so the server runs on a single CPU core | Line 8 |
+| Security Implications | Plain HTTP with no TLS, authentication or rate limiting. The only protections are Node.js defaults: a 16 KB header limit, a 60 s header timeout and a 300 s request timeout | Line 8; runtime check |
 | Maintenance Requirements | No tests, linting or manifest. The file name contains a space and parentheses, so it must be quoted in every invocation | Repository root |
 
 ### 2.4.2 F-002: Uniform Fixed-Response Handling
 
 | Consideration | Detail | Evidence |
 |---|---|---|
-| Technical Constraints | The handler is an inline anonymous function with no routing structure. The status code and headers are implicit Node.js defaults | Lines 3–4 |
-| Performance Requirements | Each request does one `res.end` with a constant string, with no I/O or parsing in application code. 200 concurrent requests all returned `200` | Line 4; runtime check |
-| Scalability Considerations | The handler is stateless, so every instance returns the same response. One event loop bounds throughput | Line 4 |
-| Security Implications | Request input is never read, so application code has no input-handling surface. No `Content-Type` or security headers are sent | Line 4; runtime headers |
-| Maintenance Requirements | The body is a hard-coded literal. Changing it means editing line 4, and no test guards the exact output | Line 4 |
+| Technical Constraints | The handler is an inline anonymous function with no routing structure. The status code and headers are implicit Node.js defaults | Lines 8–9 |
+| Performance Requirements | Each request does one `res.end` with a constant string, with no I/O or parsing in application code. 200 concurrent requests all returned `200` | Line 9; runtime check |
+| Scalability Considerations | The handler is stateless, so every instance returns the same response. One event loop bounds throughput | Line 9 |
+| Security Implications | Request input is never read, so application code has no input-handling surface. No `Content-Type` or security headers are sent | Line 9; runtime headers |
+| Maintenance Requirements | The body is a hard-coded literal. Changing it means editing line 9, and no test guards the exact output | Line 9 |
 
 ### 2.4.3 F-003: TCP Listener on Port 3000
 
 | Consideration | Detail | Evidence |
 |---|---|---|
-| Technical Constraints | The port is the literal `3000`, with no host argument and no environment variable or CLI configuration | Line 5 |
+| Technical Constraints | The port is the literal `3000`, with no host argument and no environment variable or CLI configuration | Line 10 |
 | Performance Requirements | Node.js keep-alive (`Keep-Alive: timeout=5`) lets clients reuse a connection for repeated requests | Runtime headers |
 | Scalability Considerations | One instance per host. A second instance crashes with `EADDRINUSE :::3000` | Runtime check |
 | Security Implications | The bind to `::` exposes the service on all interfaces. The host's firewall and network alone decide who can reach it | Runtime `server.address()` check |
-| Maintenance Requirements | No `'error'` handler and no graceful shutdown. Stopping the server means terminating the process, and no signal handlers exist | Line 5 |
+| Maintenance Requirements | No `'error'` handler and no graceful shutdown. Stopping the server means terminating the process, and no signal handlers exist | Line 10 |
 
 ### 2.4.4 F-004: Startup Readiness Logging
 
 | Consideration | Detail | Evidence |
 |---|---|---|
-| Technical Constraints | The message is a literal, so it cannot report the real bind address or port | Line 5 |
-| Performance Requirements | One synchronous stdout write at startup | Line 5 |
-| Scalability Considerations | No structured, per-request or per-instance logging, so multiple instances cannot be told apart from their output | Line 5 |
-| Security Implications | The loopback URL `127.0.0.1` understates the real `::` exposure. There is no access log for auditing | Line 5; runtime check |
-| Maintenance Requirements | The port in the message must be kept in step with the `listen` argument by hand | Line 5 |
+| Technical Constraints | The message is a literal, so it cannot report the real bind address or port | Line 10 |
+| Performance Requirements | One synchronous stdout write at startup | Line 10 |
+| Scalability Considerations | No structured, per-request or per-instance logging, so multiple instances cannot be told apart from their output | Line 10 |
+| Security Implications | The loopback URL `127.0.0.1` understates the real `::` exposure. There is no access log for auditing | Line 10; runtime check |
+| Maintenance Requirements | The port in the message must be kept in step with the `listen` argument by hand | Line 10 |
 
 ### 2.4.5 F-005: Lodash Module Loading
 
 | Consideration | Detail | Evidence |
 |---|---|---|
-| Technical Constraints | No `package.json` exists. lodash must be installed separately, somewhere Node.js module resolution can find it from the file's directory | Line 1; repository root |
-| Performance Requirements | The whole module is loaded synchronously at startup, which costs load time and memory for no functional use | Lines 1–5 |
+| Technical Constraints | No `package.json` exists. lodash must be installed separately, somewhere Node.js module resolution can find it from the file's directory | Line 5; repository root |
+| Performance Requirements | The whole module is loaded synchronously at startup, which costs load time and memory for no functional use | Lines 5–10 |
 | Scalability Considerations | Every deployment target must provide lodash by hand. Clean or automated environments fail at startup with exit code 1 | Runtime check |
-| Security Implications | Unpinned third-party code runs in the process for no benefit. The unknown version means vulnerabilities cannot be tracked | Line 1; repository root |
-| Maintenance Requirements | `_` is unreferenced, so removing line 1 would not change request handling. It would only remove the startup dependency | Lines 1–5 |
+| Security Implications | Unpinned third-party code runs in the process for no benefit. The unknown version means vulnerabilities cannot be tracked | Line 5; repository root |
+| Maintenance Requirements | `_` is unreferenced, so removing line 5 would not change request handling. It would only remove the startup dependency | Lines 5–10 |
 
 ## 2.5 Traceability Matrix
 
@@ -724,24 +723,24 @@ Every requirement traces to a line of `server (1).js`. No automated test exists 
 
 | Requirement ID | Source Location | Verification and Result | Related Specification |
 |---|---|---|---|
-| F-001-RQ-001 | Line 3 `createServer` | Runtime: server answers HTTP/1.1. Passes only when lodash is resolvable | 1.3.1.1 HTTP server creation |
-| F-001-RQ-002 | Lines 3–4 handler | Runtime: GET, POST and PUT on different paths give identical responses. Passed | 1.2.2 Major System Components |
-| F-001-RQ-003 | Lines 1–5 (`require`, no workers) | Code inspection plus runtime start. Passed | 1.2.2 Core Technical Approach |
-| F-001-RQ-004 | Line 3 (no options) | Runtime: 20 KB header returns `431`; timeout properties read. Passed | 1.2.1 Current System Limitations |
-| F-002-RQ-001 | Line 4 `res.end` | Runtime: body `Hello, World!\n` for every method and path. Passed | 1.3.1.1 Fixed-response handling |
-| F-002-RQ-002 | Line 4 (no `statusCode`) | Runtime: `HTTP/1.1 200 OK`. Passed | 1.2.3 Measurable Objectives |
-| F-002-RQ-003 | Line 4 (no `setHeader`) | Runtime: four default headers, no `Content-Type`. Passed | 1.2.1 Current System Limitations |
-| F-002-RQ-004 | Line 4 | Runtime: `HEAD /` returns `200` with no body. Passed | 1.2.2 Primary System Capabilities |
-| F-002-RQ-005 | Line 4 | Runtime: 200 concurrent requests all returned `200`. Passed | 1.3.1.2 System Boundaries |
-| F-003-RQ-001 | Line 5 `listen(3000, …)` | Runtime: request to `127.0.0.1:3000` returns `200`. Passed | 1.3.1.1 Port binding |
-| F-003-RQ-002 | Line 5 (no host) | Runtime: `server.address()` reports `::`. Passed | 1.2.1 Current System Limitations |
-| F-003-RQ-003 | Line 5 (no `'error'` listener) | Runtime: second instance crashes with `EADDRINUSE :::3000`. Passed | 1.3.2 Unsupported Use Cases |
-| F-004-RQ-001 | Line 5 callback | Runtime: one readiness line on stdout. Passed | 1.3.1.1 Startup logging |
-| F-004-RQ-002 | Line 5 callback | Runtime: no line on a lodash or port failure. Passed | 1.2.2 Core Technical Approach (flowchart) |
-| F-004-RQ-003 | Lines 3–5 | Runtime: requests produce no output. Passed | 1.2.3 Key Performance Indicators |
-| F-005-RQ-001 | Line 1 `require('lodash')` | Runtime: startup proceeds when lodash is resolvable. Passed | 1.3.1.1 Essential Integrations |
-| F-005-RQ-002 | Line 1 | Runtime in a clean checkout: `MODULE_NOT_FOUND`, exit code 1. Passed | 1.2.1 Current System Limitations |
-| F-005-RQ-003 | Lines 2–5 | Code inspection: `_` is unreferenced. Passed | 1.1.4 Value Proposition |
+| F-001-RQ-001 | Line 8 `createServer` | Runtime: server answers HTTP/1.1. Passes only when lodash is resolvable | 1.3.1.1 HTTP server creation |
+| F-001-RQ-002 | Lines 8–9 handler | Runtime: GET, POST and PUT on different paths give identical responses. Passed | 1.2.2 Major System Components |
+| F-001-RQ-003 | Lines 5–10 (`require`, no workers) | Code inspection plus runtime start. Passed | 1.2.2 Core Technical Approach |
+| F-001-RQ-004 | Line 8 (no options) | Runtime: 20 KB header returns `431`; timeout properties read. Passed | 1.2.1 Current System Limitations |
+| F-002-RQ-001 | Line 9 `res.end` | Runtime: body `Hello, World!\n` for every method and path. Passed | 1.3.1.1 Fixed-response handling |
+| F-002-RQ-002 | Line 9 (no `statusCode`) | Runtime: `HTTP/1.1 200 OK`. Passed | 1.2.3 Measurable Objectives |
+| F-002-RQ-003 | Line 9 (no `setHeader`) | Runtime: four default headers, no `Content-Type`. Passed | 1.2.1 Current System Limitations |
+| F-002-RQ-004 | Line 9 | Runtime: `HEAD /` returns `200` with no body. Passed | 1.2.2 Primary System Capabilities |
+| F-002-RQ-005 | Line 9 | Runtime: 200 concurrent requests all returned `200`. Passed | 1.3.1.2 System Boundaries |
+| F-003-RQ-001 | Line 10 `listen(3000, …)` | Runtime: request to `127.0.0.1:3000` returns `200`. Passed | 1.3.1.1 Port binding |
+| F-003-RQ-002 | Line 10 (no host) | Runtime: `server.address()` reports `::`. Passed | 1.2.1 Current System Limitations |
+| F-003-RQ-003 | Line 10 (no `'error'` listener) | Runtime: second instance crashes with `EADDRINUSE :::3000`. Passed | 1.3.2 Unsupported Use Cases |
+| F-004-RQ-001 | Line 10 callback | Runtime: one readiness line on stdout. Passed | 1.3.1.1 Startup logging |
+| F-004-RQ-002 | Line 10 callback | Runtime: no line on a lodash or port failure. Passed | 1.2.2 Core Technical Approach (flowchart) |
+| F-004-RQ-003 | Lines 8–10 | Runtime: requests produce no output. Passed | 1.2.3 Key Performance Indicators |
+| F-005-RQ-001 | Line 5 `require('lodash')` | Runtime: startup proceeds when lodash is resolvable. Passed | 1.3.1.1 Essential Integrations |
+| F-005-RQ-002 | Line 5 | Runtime in a clean checkout: `MODULE_NOT_FOUND`, exit code 1. Passed | 1.2.1 Current System Limitations |
+| F-005-RQ-003 | Lines 6–10 | Code inspection: `_` is unreferenced. Passed | 1.1.4 Value Proposition |
 
 ### 2.5.2 Feature-to-Scope Traceability
 
@@ -759,9 +758,9 @@ Every requirement traces to a line of `server (1).js`. No automated test exists 
 
 | ID | Assumption | Impact if Invalid |
 |---|---|---|
-| A-001 | The requirements describe the system as built. The repository records no stated intent: no README, requirements, issues or code comments | Intended behavior may differ from F-001 to F-005 |
+| A-001 | The requirements describe the system as built. The repository records no stated intent: `README.md` gives only the install and run steps, and the four JSDoc comments (lines 1-3 and line 7) restate the response behavior. There are no requirements, issues or design notes | Intended behavior may differ from F-001 to F-005 |
 | A-002 | Node.js default behaviors (status `200`, keep-alive headers, timeouts, 16 KB header limit) are as observed on v22.23.3. Other versions were not checked | F-001-RQ-004, F-002-RQ-003 and F-002-RQ-004 may not hold on other runtimes |
-| A-003 | lodash is installed separately whenever F-001 to F-004 are run or tested | Without it, only F-005-RQ-002 can be observed |
+| A-003 | lodash is installed separately whenever F-001 to F-004 are run or tested, as `README.md` describes | Without it, only F-005-RQ-002 can be observed |
 | A-004 | The real bind address (`::`) is the requirement; the `127.0.0.1` in the log is display text | If loopback-only binding was intended, F-003-RQ-002 records a defect, not a requirement |
 | A-005 | Feature priorities were assigned from each feature's role in serving the response. The repository defines none | Priorities may need revision once stakeholders state intent |
 
@@ -769,10 +768,10 @@ Every requirement traces to a line of `server (1).js`. No automated test exists 
 
 | ID | Constraint | Affected Requirements | Source |
 |---|---|---|---|
-| C-001 | The port is hard-coded to `3000`; there is no environment, flag or file configuration | F-003-RQ-001, F-004-RQ-001 | Line 5 |
+| C-001 | The port is hard-coded to `3000`; there is no environment, flag or file configuration | F-003-RQ-001, F-004-RQ-001 | Line 10 |
 | C-002 | No dependency manifest or lockfile, so the lodash version is unpinned and unverified | F-005-RQ-001, F-005-RQ-002 | Repository root |
 | C-003 | The Node.js runtime version is not pinned | F-001-RQ-004, F-002-RQ-003 | Repository root |
-| C-004 | Single process; no error handling or graceful shutdown | F-001-RQ-003, F-003-RQ-003 | Lines 3–5 |
+| C-004 | Single process; no error handling or graceful shutdown | F-001-RQ-003, F-003-RQ-003 | Lines 8–10 |
 | C-005 | The file name `server (1).js` must be quoted on the command line | F-001-RQ-003 | Repository root |
 | C-006 | No automated tests or CI exist, so verification is manual | All requirements | Repository root |
 
@@ -780,15 +779,15 @@ Every requirement traces to a line of `server (1).js`. No automated test exists 
 
 | Version | Date | Baseline | Change Summary |
 |---|---|---|---|
-| 1.0 | 2026-10-06 | Commit `f0ba73b` ("Add files via upload"), identical on `main` and `0610_02` | Initial baseline: 5 features (F-001 to F-005) and 18 requirements, documented from `server (1).js` |
+| 1.0 | 2026-10-06 | Commit `f0ba73b` ("Add files via upload"), which remains the head of `main`; `0610_02` and `HEAD` are at `93f60af` | Initial baseline: 5 features (F-001 to F-005) and 18 requirements, documented from `server (1).js` |
 
 All 18 requirements are at version 1.0. IDs follow `F-XXX` for features and `F-XXX-RQ-YYY` for requirements, numbered in sequence within each feature. A change to `server (1).js` that alters any behavior above should add a new row to this table and update the affected rows in Sections 2.2 and 2.5.
 
 ## 2.7 References
 
-- `server (1).js` - The only source file and the basis for every feature and requirement: the unused, undeclared `require('lodash')` (line 1, F-005); `http.createServer` with an inline listener (line 3, F-001); the fixed `Hello, World!\n` response (line 4, F-002); `listen(3000, …)` with no host (line 5, F-003); and the readiness `console.log` (line 5, F-004).
-- `/` (repository root) - Contains only `server (1).js`. The absence of a README, `package.json`, lockfile, configuration, license, tests, CI and deployment files establishes constraints C-001 to C-006 and the lack of documented intent (A-001).
-- Git history (commit `f0ba73b`, branches `main` and `0610_02`) - The single commit "Add files via upload", used as the requirement baseline for version 1.0.
+- `server (1).js` - The only source file and the basis for every feature and requirement: the unused, undeclared `require('lodash')` (line 5, F-005); `http.createServer` with an inline listener (line 8, F-001); the fixed `Hello, World!\n` response (line 9, F-002); `listen(3000, …)` with no host (line 10, F-003); and the readiness `console.log` (line 10, F-004). Four JSDoc comments (lines 1-3 and line 7) precede those statements without adding behavior.
+- `/` (repository root) - Contains `server (1).js` and `README.md`, plus the tracked specification under `blitzy/` on `0610_02`. `README.md` gives only the project name, the install step `npm install lodash` and the run step `node "server (1).js"`. The absence of a `package.json`, lockfile, configuration, license, tests, CI and deployment files establishes constraints C-001 to C-006 and the lack of documented intent (A-001).
+- Git history (nine commits; `main` at `f0ba73b`, `0610_02` and `origin/0610_02` at `93f60af`) - `f0ba73b` ("Add files via upload") remains the requirement baseline for version 1.0 and is still the head of `main`; the later commits update the service file, add `README.md` and add the Blitzy documentation, and `93f60af` is a merge.
 - Runtime verification on Node.js v22.23.3 - Confirmed `MODULE_NOT_FOUND` with exit code 1 in a clean checkout; with lodash resolvable: `200 OK` with `Content-Length: 14` and no `Content-Type` for GET, POST and PUT; a body-less `HEAD` response; `431` for a 20 KB header; default `headersTimeout` 60000, `requestTimeout` 300000 and `keepAliveTimeout` 5000 ms; bind to `::` port 3000; `EADDRINUSE` on a second instance; and 200 concurrent requests all returning `200`.
 - Section 1.1 Executive Summary - Use-case framing (smoke-test and connectivity target) and the value proposition, cross-referenced by F-002 and F-005-RQ-003.
 - Section 1.2 System Overview - The current limitations, components, the startup and request flowchart, and the success criteria, used in the traceability matrix and for related flowcharts.
@@ -798,27 +797,27 @@ All 18 requirements are at version 1.0. IDs follow `F-XXX` for features and `F-X
 
 ## 3.1 Programming Languages
 
-The repository contains one source file, `server (1).js`. It is the same on `main` and `0610_02` (commit `f0ba73b`), so the system uses exactly one programming language. The project-wide default stack names Python for the backend and TypeScript for frontends. The repository uses neither. This section documents the system as built.
+The repository contains one source file, `server (1).js`, which is now ten lines and carries four JSDoc comments. Its current content is the version on `0610_02` at `93f60af`; `main` still holds the original five-line version added in `f0ba73b`. Either way the system uses exactly one programming language. The project-wide default stack names Python for the backend and TypeScript for frontends. The repository uses neither. This section documents the system as built.
 
 ### 3.1.1 Languages by Component
 
 | Component | Language | Standard and Module System | Evidence |
 |---|---|---|---|
-| HTTP server (the whole system) | JavaScript | ECMAScript 2015+ syntax (`const`, arrow functions); CommonJS `require` | `server (1).js` lines 1–5 |
-| Build, configuration, infrastructure, tests | None | No JSON manifests, YAML pipelines, shell scripts, HTML/CSS or TypeScript exist | Repository root (one file only) |
+| HTTP server (the whole system) | JavaScript | ECMAScript 2015+ syntax (`const`, arrow functions); CommonJS `require` | `server (1).js` lines 5–10 |
+| Build, configuration, infrastructure, tests | None | No JSON manifests, YAML pipelines, shell scripts, HTML/CSS or TypeScript exist | Repository root (source file and `README.md` only) |
 
 The language features in use are:
 
-- `const` binding: line 1 (`const _ = require('lodash');`).
-- Arrow functions: the request handler on lines 3–4 and the listen callback on line 5.
-- CommonJS module loading: `require('lodash')` on line 1 and `require('http')` on line 3. The file has no `import`/`export` statements and no `module.exports`.
+- `const` binding: line 5 (`const _ = require('lodash');`).
+- Arrow functions: the request handler on lines 8–9 and the listen callback on line 10.
+- CommonJS module loading: `require('lodash')` on line 5 and `require('http')` on line 8. The file has no `import`/`export` statements and no `module.exports`.
 
 ### 3.1.2 Selection Rationale
 
-The repository records no rationale. It has no README, comments or design notes (Section 2.6.1, assumption A-001). The reasons below follow from what the code does, not from stated intent:
+The repository records no rationale. `README.md` gives only the install and run steps, and the four JSDoc comments (lines 1-3 and line 7) restate the response behavior; neither states design intent (Section 2.6.1, assumption A-001). The reasons below follow from what the code does, not from stated intent:
 
 - **No compilation step.** Plain JavaScript runs directly on Node.js, so the source file is also the deployable artifact (Section 3.6).
-- **Server in one statement.** The JavaScript-plus-Node.js pairing provides an HTTP server through the built-in `http` module. Lines 3–5 create, configure and start it as one chained expression.
+- **Server in one statement.** The JavaScript-plus-Node.js pairing provides an HTTP server through the built-in `http` module. Lines 8–10 create, configure and start it as one chained expression.
 - **Event-driven fit.** A fixed-response handler (Section 1.2.2) does no blocking work, which suits Node.js's single-threaded event loop.
 
 ### 3.1.3 Constraints and Dependencies
@@ -827,7 +826,7 @@ The repository records no rationale. It has no README, comments or design notes 
 |---|---|---|
 | Module format is CommonJS | No `package.json` declares `"type": "module"`, and the file uses `require`, so Node.js loads it as CommonJS | Converting to ES modules would require a manifest or a `.mjs` rename and rewriting both `require` calls |
 | Runtime is mandatory | JavaScript here runs only in the Node.js runtime. It uses Node-specific `require` and the `http` module, so it cannot run in a browser | Node.js version compatibility is covered in Section 3.2.3 |
-| No static typing or linting | No TypeScript, JSDoc types, ESLint or formatter configuration exists | Defects such as the unused `_` binding (line 1) are not caught automatically |
+| No static typing or linting | No TypeScript, JSDoc type annotations, ESLint or formatter configuration exists. The JSDoc comments carry prose only, no `@param` or `@type` tags | Defects such as the unused `_` binding (line 5) are not caught automatically |
 | File name contains a space and parentheses | `server (1).js` must be quoted in every shell invocation | See Section 2.6.2, constraint C-005 |
 
 The ES2015 syntax sets no practical minimum version, because every currently supported Node.js release line supports `const` and arrow functions. The binding constraints come from the runtime (Section 3.2) and from the undeclared `lodash` dependency (Section 3.3).
@@ -844,7 +843,7 @@ The system uses no application framework. The project-wide default stack names F
 | V8 (embedded in Node.js) | 12.4.254.21-node.57 | JavaScript engine that runs `server (1).js` | `process.versions` on v22.23.3 |
 | llhttp (embedded in Node.js) | 9.4.3 | HTTP/1.1 request parser behind the `http` module | `process.versions` on v22.23.3 |
 | libuv (embedded in Node.js) | 1.51.0 | Event loop and TCP socket I/O for the port 3000 listener | `process.versions` on v22.23.3 |
-| `http` (Node.js built-in module) | Ships with the runtime | `createServer` builds the server; `listen(3000, …)` binds it | `server (1).js` lines 3 and 5 |
+| `http` (Node.js built-in module) | Ships with the runtime | `createServer` builds the server; `listen(3000, …)` binds it | `server (1).js` lines 8 and 10 |
 
 The script uses the `http` module's defaults, as observed on v22.23.3 (Sections 2.4.1 and 2.4.3):
 
@@ -860,9 +859,9 @@ The script uses the `http` module's defaults, as observed on v22.23.3 (Sections 
 
 | Library | Version | Usage in Code | Status |
 |---|---|---|---|
-| `lodash` | Undeclared; whatever copy the host can resolve. Latest on npm is 4.18.1 | `const _ = require('lodash');` (line 1). `_` is never referenced | Startup dependency with no function; see Section 3.3 |
+| `lodash` | Undeclared; whatever copy the host can resolve. Latest on npm is 4.18.1 | `const _ = require('lodash');` (line 5). `_` is never referenced | Startup dependency with no function; see Section 3.3 |
 
-The code uses no web framework (Express, Koa, Fastify), router, middleware, templating engine, logging library or test library. `console.log` (line 5) is the only output mechanism.
+The code uses no web framework (Express, Koa, Fastify), router, middleware, templating engine, logging library or test library. `console.log` (line 10) is the only output mechanism.
 
 ### 3.2.3 Compatibility Requirements
 
@@ -896,7 +895,7 @@ The diagram shows how the components in this section depend on each other, from 
 ```mermaid
 flowchart TB
     subgraph AppLayer["Application layer"]
-        Script["server (1).js<br/>JavaScript, CommonJS, 5 lines"]
+        Script["server (1).js<br/>JavaScript, CommonJS, 10 lines"]
     end
     subgraph ModLayer["Module layer"]
         Lodash["lodash<br/>npm package, undeclared, unused"]
@@ -909,9 +908,9 @@ flowchart TB
     end
     Sock["Host TCP listener<br/>all interfaces, port 3000"]
     Out["Process stdout<br/>startup log line"]
-    Script -->|"line 1: require lodash"| Lodash
-    Script -->|"line 3: require http"| HttpMod
-    Script -->|"line 5: console.log"| Out
+    Script -->|"line 5: require lodash"| Lodash
+    Script -->|"line 8: require http"| HttpMod
+    Script -->|"line 10: console.log"| Out
     HttpMod --> Llhttp
     HttpMod --> Libuv
     Script --> V8
@@ -929,11 +928,11 @@ The repository has no `package.json`, lockfile or vendored `node_modules`. Its d
 | `lodash` | Third-party open-source package (MIT licence) | None. Not declared anywhere | npm public registry (`registry.npmjs.org`); source `github.com/lodash/lodash` |
 | `http` | Node.js built-in module | Bundled with the runtime (Section 3.2.1) | None; ships with Node.js |
 
-`lodash` has no transitive dependencies: installing it adds exactly one package. The system's whole third-party footprint is therefore one package, required on line 1 and never used.
+`lodash` has no transitive dependencies: installing it adds exactly one package. The system's whole third-party footprint is therefore one package, required on line 5 and never used.
 
 ### 3.3.2 Version Landscape for lodash
 
-Because no version is declared, a host can satisfy line 1 with any lodash copy it can resolve. The npm registry lists these recent releases:
+Because no version is declared, a host can satisfy line 5 with any lodash copy it can resolve. The npm registry lists these recent releases:
 
 | Version | Published | Notes |
 |---|---|---|
@@ -944,7 +943,7 @@ Because no version is declared, a host can satisfy line 1 with any lodash copy i
 
 ### 3.3.3 Integration Requirements
 
-For line 1 to succeed, Node.js must find `lodash` in a `node_modules` folder in the script's directory or one of its parents. A clean checkout has none, so the process exits with code 1 and `MODULE_NOT_FOUND` (Section 2.6.1, assumption A-003).
+For line 5 to succeed, Node.js must find `lodash` in a `node_modules` folder in the script's directory or one of its parents. `README.md` documents this setup in one line, `npm install lodash`, and supplies no manifest, so that command installs whatever the registry serves as `latest` and records no version: constraint C-002 stays open (Section 2.6.2). A clean checkout has no `node_modules` at all, so the process exits with code 1 and `MODULE_NOT_FOUND` (Section 2.6.1, assumption A-003).
 
 A minimal manifest with this dependency was verified outside the repository:
 
@@ -967,9 +966,9 @@ With it, `npm install` resolved `https://registry.npmjs.org/lodash/-/lodash-4.18
 What this means for the system:
 
 - **No reachable call path today.** The code never calls `_.template`, `_.unset`, `_.omit` or any other lodash function, so request data cannot reach the vulnerable functions.
-- **Unknown version, untracked risk.** With no manifest or lockfile, nothing records which lodash copy a host loads. Audit tools have nothing to scan, and a vulnerable copy in a parent `node_modules` would load silently.
+- **Unknown version, untracked risk.** With no manifest or lockfile, nothing records which lodash copy a host loads. Audit tools have nothing to scan, and a vulnerable copy in a parent `node_modules` would load silently. The documented `npm install lodash` step does not narrow this: it pins nothing.
 - **No integrity verification.** Without a lockfile, the code loaded at startup is not checked against a known hash.
-- **Remediation options.** Remove line 1, which changes no request behavior (Section 2.4.5). Or declare and lock `lodash` at `^4.18.1` as shown in Section 3.3.3.
+- **Remediation options.** Remove line 5, which changes no request behavior (Section 2.4.5). Or declare and lock `lodash` at `^4.18.1` as shown in Section 3.3.3.
 
 ## 3.4 Third-Party Services
 
@@ -977,12 +976,12 @@ The system uses no third-party services. `server (1).js` makes no outbound netwo
 
 | Category | Default Stack Entry | Repository Status | Evidence |
 |---|---|---|---|
-| External APIs and integrations | Not specified | None. The process only accepts inbound HTTP on port 3000 | `server (1).js` lines 3–5 |
-| Authentication services | Auth0 | Not used. Every request is answered anonymously with `200 OK` | Line 4; no auth code or configuration |
-| Monitoring and observability | Not specified | None. The only signal is one startup line on stdout; there are no metrics, traces, health endpoint or request logs | Line 5 |
+| External APIs and integrations | Not specified | None. The process only accepts inbound HTTP on port 3000 | `server (1).js` lines 8–10 |
+| Authentication services | Auth0 | Not used. Every request is answered anonymously with `200 OK` | Line 9; no auth code or configuration |
+| Monitoring and observability | Not specified | None. The only signal is one startup line on stdout; there are no metrics, traces, health endpoint or request logs | Line 10 |
 | Cloud services | AWS | Not used. No SDK, account configuration or infrastructure definitions exist | Repository root |
 
-The only external system the stack touches is the npm public registry, and only when an operator installs `lodash` by hand (Section 3.3.3). The repository contains no install step that contacts it.
+The only external system the stack touches is the npm public registry, and only when an operator installs `lodash` by hand (Section 3.3.3). The repository's single instruction for that step is the `npm install lodash` line in `README.md`; nothing in the running process contacts the registry.
 
 **Security implication:** with no identity provider or edge service, anyone who can reach port 3000 on any host interface gets access. Exposure is controlled entirely by the host's firewall and network placement (Section 2.4.3).
 
@@ -992,17 +991,17 @@ The system has no database, cache or storage layer. The default stack's MongoDB 
 
 | Concern | Status | Evidence |
 |---|---|---|
-| Primary and secondary databases | None. No database driver, connection string or query code | `server (1).js` lines 1–5 |
-| Data persistence | None. The handler reads no request data and writes nothing. Every response is the literal `Hello, World!\n` | Line 4 |
-| Caching | None at the application level. Because the response is constant, no cache is needed for correctness | Line 4 |
-| File or object storage | None. No `fs` usage, uploads or object-store client | Lines 1–5 |
-| Logs | The one startup line goes to stdout. Whether it is kept depends on the process supervisor; the application stores nothing | Line 5 |
+| Primary and secondary databases | None. No database driver, connection string or query code | `server (1).js` lines 5–10 |
+| Data persistence | None. The handler reads no request data and writes nothing. Every response is the literal `Hello, World!\n` | Line 9 |
+| Caching | None at the application level. Because the response is constant, no cache is needed for correctness | Line 9 |
+| File or object storage | None. No `fs` usage, uploads or object-store client | Lines 5–10 |
+| Logs | The one startup line goes to stdout. Whether it is kept depends on the process supervisor; the application stores nothing | Line 10 |
 
 Because the process is fully stateless, instances are interchangeable: restarting one loses no data, and any number of instances on separate hosts return the same output (Section 2.4.2).
 
 ## 3.6 Development & Deployment
 
-The repository contains no development, build, packaging or delivery tooling. Every file on every branch is `server (1).js`. The default stack's Docker, Terraform and GitHub Actions are not used.
+The repository contains no development, build, packaging or delivery tooling. Both branches carry `server (1).js`; `0610_02` additionally carries `README.md` and the Blitzy documentation under `blitzy/`. The default stack's Docker, Terraform and GitHub Actions are not used.
 
 ### 3.6.1 Development Tools
 
@@ -1012,7 +1011,7 @@ The repository contains no development, build, packaging or delivery tooling. Ev
 | Package manager | None (no `package.json` or lockfile) | npm 11.18.0, installed separately from the npm 10.9.9 that ships with Node.js v22.23.3 |
 | Linting / formatting | None (no ESLint, Prettier or EditorConfig files) | — |
 | Testing | None (no test files or test framework) | Behavior verified manually with `curl` (Section 2.6.2, constraint C-006) |
-| Version control | Git: branches `main` and `0610_02`, both at single commit `f0ba73b` ("Add files via upload") | — |
+| Version control | Git: nine commits; `main` at `f0ba73b` ("Add files via upload"), `0610_02` and `origin/0610_02` at `93f60af` | — |
 
 The commit message and the ` (1)` suffix in the file name suggest the file was uploaded through a web interface rather than committed from a development workspace. This is an inference; the repository does not record it.
 
@@ -1024,7 +1023,7 @@ There is no build step. The script runs unchanged, with no transpilation, bundli
 node "server (1).js"
 ```
 
-The quotes are required because the file name contains a space and parentheses (Section 2.6.2, constraint C-005).
+The quotes are required because the file name contains a space and parentheses (Section 2.6.2, constraint C-005). `README.md` is the only place the two operator steps are written down: `npm install lodash` to make the dependency resolvable, then this run command.
 
 ### 3.6.3 Containerization and Infrastructure
 
@@ -1035,7 +1034,7 @@ The quotes are required because the file name contains a space and parentheses (
 | Runtime configuration | Port `3000` is a literal; no environment variables | Each host or container can run only one instance on port 3000 (Section 2.4.3) |
 | Process supervision | No service unit, process manager or signal handling | Restarts after a crash (for example `EADDRINUSE`) depend on external tooling |
 
-Any container image would have to supply three things the repository does not: a pinned Node.js base image, an installed `lodash` (or line 1 removed), and a published port 3000. The server binds to `::`, so a containerised instance is reachable through the published port without code changes.
+Any container image would have to supply three things the repository does not: a pinned Node.js base image, an installed `lodash` (or line 5 removed), and a published port 3000. The server binds to `::`, so a containerised instance is reachable through the published port without code changes.
 
 ### 3.6.4 CI/CD
 
@@ -1047,7 +1046,7 @@ The diagram traces the manual path from checkout to a serving process, including
 
 ```mermaid
 flowchart LR
-    Clone["Git checkout<br/>main or 0610_02, commit f0ba73b"] --> Provide{"lodash present in a<br/>node_modules folder on the<br/>resolution path?"}
+    Clone["Git checkout<br/>main at f0ba73b<br/>or 0610_02 at 93f60af"] --> Provide{"lodash present in a<br/>node_modules folder on the<br/>resolution path?"}
     Provide -- "No, clean checkout" --> FailMod["Exit code 1<br/>MODULE_NOT_FOUND"]
     Provide -- "Yes, installed by hand" --> Launch["node server (1).js<br/>file name quoted in the shell"]
     Launch --> PortFree{"Port 3000 free?"}
@@ -1068,14 +1067,16 @@ flowchart LR
 
 #### Repository Files and Folders
 
-- `server (1).js` - Sole source file: JavaScript in CommonJS format; `require('lodash')` (line 1, unused); built-in `http` server (lines 3–4); `listen(3000)` and startup log (line 5)
-- `` (repository root) - Only `server (1).js` plus `.git`. No `package.json`, lockfile, `node_modules`, `.nvmrc`, Dockerfile, IaC, CI workflows, linters or tests; every branch (`main`, `0610_02`) at single commit `f0ba73b`
+- `server (1).js` - Sole source file: JavaScript in CommonJS format, ten lines with four JSDoc comments; `require('lodash')` (line 5, unused); built-in `http` server (lines 8–9); `listen(3000)` and startup log (line 10)
+- `README.md` - Five lines: project name `some_files_01`, install step `npm install lodash`, run step `node "server (1).js"`
+- `blitzy/documentation/Technical Specifications.md` - The tracked copy of this specification, present on `0610_02`
+- `` (repository root) - Holds `server (1).js`, `README.md` and the `blitzy/` documentation folder alongside `.git`. No `package.json`, lockfile, `node_modules`, `.nvmrc`, Dockerfile, IaC, CI workflows, linters or tests. Nine commits: `main` at `f0ba73b`, `0610_02` and `origin/0610_02` at `93f60af`
 
 #### Technical Specification Cross-References
 
 - Section 1.2 System Overview - Limitations, core technical approach, startup flow, Node.js v22.23.3 as the observed runtime
 - Section 2.4 Implementation Considerations - Node.js `http` defaults, bind to `::`, security and maintenance considerations per feature
-- Section 2.6 Assumptions, Constraints and Requirement Versioning - Assumptions A-001 to A-003; constraints C-001 to C-003, C-005, C-006; baseline `f0ba73b`
+- Section 2.6 Assumptions, Constraints and Requirement Versioning - Assumptions A-001 to A-003; constraints C-001 to C-003, C-005, C-006; requirement baseline `f0ba73b` (still the head of `main`), current head `93f60af`
 
 #### External Sources
 
@@ -1088,12 +1089,12 @@ flowchart LR
 
 ## 4.1 System Workflows
 
-The system is one five-statement CommonJS script, `server (1).js`, at commit `f0ba73b`. It defines no routes, jobs, queues or integrations, so its workflows are short and fully deterministic. The application code has **no conditional statements**. Every decision point below is made either implicitly, when a statement throws, or by the Node.js runtime's HTTP layer acting on its defaults. All behaviour was confirmed by running the file on Node.js v22.23.3 (assumption A-002, Section 2.6.1).
+The system is one ten-line CommonJS script, `server (1).js`, four of whose lines are JSDoc comments, in the `0610_02` state at `93f60af`. It defines no routes, jobs, queues or integrations, so its workflows are short and fully deterministic. The application code has **no conditional statements**. Every decision point below is made either implicitly, when a statement throws, or by the Node.js runtime's HTTP layer acting on its defaults. All behaviour was confirmed by running the file on Node.js v22.23.3 (assumption A-002, Section 2.6.1).
 
 | ID | Workflow | Trigger | Source (features) |
-|---|---|---|---|
-| WF-01 | Process Startup | Operator runs `node "server (1).js"` | Lines 1, 3, 5 (F-005, F-001, F-003, F-004) |
-| WF-02 | Request–Response | An HTTP request arrives on port 3000 | Lines 3–4 plus Node.js defaults (F-002) |
+| --- | --- | --- | --- |
+| WF-01 | Process Startup | Operator runs node "server (1).js" | Lines 5, 8, 10 (F-005, F-001, F-003, F-004) |
+| WF-02 | Request–Response | An HTTP request arrives on port 3000 | Lines 8–9 plus Node.js defaults (F-002) |
 | WF-03 | Connection Lifecycle | The server accepts a TCP connection | Node.js defaults only: parser limits, timeouts, keep-alive |
 | WF-04 | Process Termination | A signal or an uncaught error | No handlers in code; Node.js default behaviour (constraint C-004) |
 
@@ -1104,18 +1105,18 @@ The system is one five-statement CommonJS script, `server (1).js`, at commit `f0
 The system has two actors. The **operator** starts and stops the process and reads its console output. The **HTTP client** is any tool or program that sends requests. Neither actor authenticates, and nothing is configured.
 
 | Step | Operator Journey (WF-01, WF-04) | HTTP Client Journey (WF-02, WF-03) |
-|---|---|---|
-| 1 | Check out `main` or `0610_02` (both at `f0ba73b`) | Open a TCP connection to any host interface on port 3000 |
-| 2 | Make `lodash` resolvable from the file's directory. The repository does not document this step (A-003) | Send a request with any method, path, query, headers or body |
-| 3 | Run `node "server (1).js"`. The quotes are required (C-005) | Receive `200 OK` and the 14-byte body `Hello, World!\n` |
-| 4 | Wait for `Server running at http://127.0.0.1:3000/` on stdout | Optionally reuse the connection (`Connection: keep-alive`) |
+| --- | --- | --- |
+| 1 | Check out `main` (`f0ba73b`) or `0610_02` (`93f60af`) | Open a TCP connection to any host interface on port 3000 |
+| 2 | Make lodash resolvable from the file's directory. `README.md` records this step as `npm install lodash`, a command that pins no version (A-003) | Send a request with any method, path, query, headers or body |
+| 3 | Run node "server (1).js". The quotes are required (C-005) | Receive 200 OK and the 14-byte body Hello, World!\n |
+| 4 | Wait for Server running at http://127.0.0.1:3000/ on stdout | Optionally reuse the connection (Connection: keep-alive) |
 | 5 | Stop with Ctrl+C (SIGINT, exit 130) or SIGTERM (exit 143) | The server closes the idle connection about 6 s after the last response |
 
 ```mermaid
 flowchart TB
     subgraph OperatorLane["Operator"]
-        O1(["Start: check out commit f0ba73b"])
-        O2["Make lodash resolvable<br/>(manual, undocumented)"]
+        O1(["Start: check out main f0ba73b<br/>or 0610_02 93f60af"])
+        O2["Make lodash resolvable<br/>(manual, per README.md)"]
         O3["Run node with the quoted file name"]
         O4{"Readiness line<br/>on stdout?"}
         O5["Read stderr:<br/>MODULE_NOT_FOUND or EADDRINUSE"]
@@ -1147,24 +1148,24 @@ flowchart TB
 #### System Interactions
 
 | Interaction | Parties | Mechanism | Evidence |
-|---|---|---|---|
-| Dependency resolution | Script, CommonJS loader, file system | Synchronous `require('lodash')` walks `node_modules` folders upward from the file's directory | Line 1 |
-| Server construction | Script, Node.js `http` built-in | `require('http').createServer(handler)` with no options object | Line 3 |
-| Socket bind | `http.Server`, host TCP stack | `.listen(3000, cb)` with no host argument binds `::` (all interfaces) | Line 5; Section 2.2.3 |
-| Readiness output | Listen callback, stdout | One `console.log` of a string literal | Line 5 |
+| --- | --- | --- | --- |
+| Dependency resolution | Script, CommonJS loader, file system | Synchronous require('lodash') walks node_modules folders upward from the file's directory | Line 5 |
+| Server construction | Script, Node.js http built-in | require('http').createServer(handler) with no options object | Line 8 |
+| Socket bind | http.Server, host TCP stack | .listen(3000, cb) with no host argument binds :: (all interfaces) | Line 10; Section 2.2.3 |
+| Readiness output | Listen callback, stdout | One console.log of a string literal | Line 10 |
 | Request parsing | Client, Node.js HTTP parser | Node.js parses and limits the request before the handler runs | Runtime checks (400, 431, 408) |
-| Response | Handler, client socket | `res.end('Hello, World!\n')` with Node.js default status and headers | Line 4 |
+| Response | Handler, client socket | res.end('Hello, World!\n') with Node.js default status and headers | Line 9 |
 
 #### Decision Points
 
 | ID | Decision | Made By | Yes Path | No Path |
-|---|---|---|---|---|
-| D1 | Is `lodash` resolvable? | CommonJS loader (implicit throw at line 1) | Continue to line 3 | `MODULE_NOT_FOUND`, exit 1, no listener (F-005-RQ-002) |
-| D2 | Is port 3000 free? | Node.js `net` layer (implicit `'error'` at line 5) | `listening` event, readiness line | Unhandled `EADDRINUSE :::3000`, exit 1 (F-003-RQ-003) |
-| D3 | Is the request syntactically valid HTTP? | Node.js HTTP parser | Continue | `400 Bad Request`, `Connection: close` |
-| D4 | Are request headers at most 16,384 bytes? | Node.js HTTP parser | Continue | `431 Request Header Fields Too Large` (F-001-RQ-004) |
-| D5 | Are headers complete before `headersTimeout`? | Node.js connection checker | Dispatch to handler | `408 Request Timeout`, socket closed |
-| D6 | Is the method `HEAD`? | Node.js response writer | Status line and headers only | Headers plus 14-byte body (F-002-RQ-004) |
+| --- | --- | --- | --- | --- |
+| D1 | Is lodash resolvable? | CommonJS loader (implicit throw at line 5) | Continue to line 8 | MODULE_NOT_FOUND, exit 1, no listener (F-005-RQ-002) |
+| D2 | Is port 3000 free? | Node.js net layer (implicit 'error' at line 10) | listening event, readiness line | Unhandled EADDRINUSE :::3000, exit 1 (F-003-RQ-003) |
+| D3 | Is the request syntactically valid HTTP? | Node.js HTTP parser | Continue | 400 Bad Request, Connection: close |
+| D4 | Are request headers at most 16,384 bytes? | Node.js HTTP parser | Continue | 431 Request Header Fields Too Large (F-001-RQ-004) |
+| D5 | Are headers complete before headersTimeout? | Node.js connection checker | Dispatch to handler | 408 Request Timeout, socket closed |
+| D6 | Is the method HEAD? | Node.js response writer | Status line and headers only | Headers plus 14-byte body (F-002-RQ-004) |
 | D7 | Does the next request arrive within the keep-alive window? | Node.js keep-alive timer | Reuse the socket | Server closes the socket |
 
 The handler itself never branches. Every request that passes D3–D5 gets the same `200 OK` response (F-002-RQ-001, F-002-RQ-002).
@@ -1172,8 +1173,8 @@ The handler itself never branches. Every request that passes D3–D5 gets the sa
 #### Error Handling Paths
 
 | Error Path | Workflow | Who Observes It | Outcome |
-|---|---|---|---|
-| `lodash` missing | WF-01 | Operator (stack trace on stderr) | Process exits with code 1 before any socket opens |
+| --- | --- | --- | --- |
+| lodash missing | WF-01 | Operator (stack trace on stderr) | Process exits with code 1 before any socket opens |
 | Port 3000 in use | WF-01 | Operator (stack trace on stderr) | New process exits with code 1. The process already holding the port is unaffected |
 | Malformed request, oversized headers, header timeout | WF-02, WF-03 | Client only (400 / 431 / 408) | That socket is closed. The server keeps serving and logs nothing |
 | Client aborts mid-request | WF-03 | Nobody | The socket is discarded and the next request succeeds |
@@ -1189,13 +1190,13 @@ Detection, retry, fallback and recovery for each path are specified in Section 4
 The process exchanges data with four external parties: the file system, through module loading; stdout and stderr; network clients; and its parent process, through the exit code. It reads no environment variables, configuration files or command-line arguments (Section 1.2.1).
 
 | Flow | Source → Destination | Data | Frequency |
-|---|---|---|---|
-| Module load | `node_modules/lodash` → process memory | The lodash module object, bound to `_` and never used | Once, synchronously, at startup |
-| Readiness signal | Process → stdout | `Server running at http://127.0.0.1:3000/` | Once, after a successful bind |
-| Fatal diagnostics | Process → stderr | Node.js stack trace (`MODULE_NOT_FOUND`, `EADDRINUSE`) | Only on startup failure |
+| --- | --- | --- | --- |
+| Module load | node_modules/lodash → process memory | The lodash module object, bound to _ and never used | Once, synchronously, at startup |
+| Readiness signal | Process → stdout | Server running at http://127.0.0.1:3000/ | Once, after a successful bind |
+| Fatal diagnostics | Process → stderr | Node.js stack trace (MODULE_NOT_FOUND, EADDRINUSE) | Only on startup failure |
 | Request | Client → server socket | HTTP/1.1 request bytes. The application never reads them | Per request |
-| Response | Server socket → client | `200 OK`, default headers, `Hello, World!\n` | Per request |
-| Exit status | Process → parent shell or supervisor | `1` (startup failure), `130` (SIGINT), `143` (SIGTERM) | Once, at termination |
+| Response | Server socket → client | 200 OK, default headers, Hello, World!\n | Per request |
+| Exit status | Process → parent shell or supervisor | 1 (startup failure), 130 (SIGINT), 143 (SIGTERM) | Once, at termination |
 
 ```mermaid
 flowchart LR
@@ -1216,7 +1217,7 @@ flowchart LR
         Client["Any HTTP client"]
     end
     Script --> Loader
-    Lodash -->|"require at line 1"| Loader
+    Lodash -->|"require at line 5"| Loader
     Loader -->|"module missing"| StdErr
     Loader --> HttpSrv
     HttpSrv -->|"listening"| StdOut
@@ -1228,18 +1229,18 @@ flowchart LR
 
 #### API Interactions
 
-The system exposes one implicit endpoint. Its contract is fixed by line 4 and by Node.js defaults.
+The system exposes one implicit endpoint. Its contract is fixed by line 9 and by Node.js defaults.
 
 | Attribute | Contract |
-|---|---|
+| --- | --- |
 | Protocol / transport | HTTP/1.1 over plaintext TCP; no TLS |
-| Address | All interfaces (`::`), port `3000` (hard-coded, constraint C-001) |
+| Address | All interfaces (::), port 3000 (hard-coded, constraint C-001) |
 | Methods / paths / query | Any; all ignored |
 | Request headers / body | Ignored by the application. Node.js limits headers to 16,384 bytes |
 | Authentication / versioning | None |
-| Response status | `200 OK` (Node.js default) |
-| Response headers | `Date`, `Connection: keep-alive`, `Keep-Alive: timeout=5`, `Content-Length: 14` (no `Content-Length` for `HEAD`); no `Content-Type` |
-| Response body | `Hello, World!\n` (14 bytes; none for `HEAD`) |
+| Response status | 200 OK (Node.js default) |
+| Response headers | Date, Connection: keep-alive, Keep-Alive: timeout=5, Content-Length: 14 (no Content-Length for HEAD); no Content-Type |
+| Response body | Hello, World!\n (14 bytes; none for HEAD) |
 
 ```bash
 curl -i -X POST http://127.0.0.1:3000/any/path   # HTTP/1.1 200 OK ... Hello, World!
@@ -1250,12 +1251,12 @@ curl -i -X POST http://127.0.0.1:3000/any/path   # HTTP/1.1 200 OK ... Hello, Wo
 All runtime behaviour is driven by Node.js event-loop events. The script registers listeners for two of them. The rest fall back to Node.js defaults.
 
 | Event | Listener Registered in Code | Resulting Behaviour |
-|---|---|---|
-| `http.Server` `'request'` | Inline arrow function passed to `createServer` (line 3) | Ends the response with the fixed body |
-| `http.Server` `'listening'` | Callback passed to `listen` (line 5) | Writes the readiness line once |
-| `http.Server` `'error'` | None | The error is thrown as uncaught and the process exits with code 1 (observed for `EADDRINUSE`) |
-| `http.Server` `'clientError'` | None | Node.js replies `400`, `431` or `408` as appropriate and closes the socket |
-| Process `SIGINT` / `SIGTERM` | None | Default termination (exit 130 / 143) |
+| --- | --- | --- |
+| http.Server 'request' | Inline arrow function passed to createServer (line 8) | Ends the response with the fixed body |
+| http.Server 'listening' | Callback passed to listen (line 10) | Writes the readiness line once |
+| http.Server 'error' | None | The error is thrown as uncaught and the process exits with code 1 (observed for EADDRINUSE) |
+| http.Server 'clientError' | None | Node.js replies 400, 431 or 408 as appropriate and closes the socket |
+| Process SIGINT / SIGTERM | None | Default termination (exit 130 / 143) |
 
 #### Batch Processing Sequences
 
@@ -1263,45 +1264,45 @@ None exist. The code schedules no jobs, timers, queues, workers or background ta
 
 ## 4.2 Flowchart Requirements
 
-This section gives the flowchart elements for each workflow in Section 4.1 and the validation rules that apply along each path. The diagrams themselves are in Section 4.4.
+This section gives the flowchart elements for each workflow in Section 4.1 and the validation rules that apply along each path. The diagrams themselves are in Section 4.4. The four JSDoc comments the file now carries (lines 1-3 and line 7) add no step here or in Section 4.4, because nothing executes on them.
 
 ### 4.2.1 Workflow Flowchart Specifications
 
 #### WF-01 Process Startup (F-005 → F-001 → F-003 → F-004)
 
 | Element | Specification |
-|---|---|
-| Start point | Operator runs `node "server (1).js"` |
-| Process steps | 1. `require('lodash')` (line 1). 2. `require('http').createServer(handler)` (line 3). 3. `.listen(3000, cb)` (line 5). 4. `cb` logs the readiness line |
+| --- | --- |
+| Start point | Operator runs node "server (1).js" |
+| Process steps | 1. require('lodash') (line 5). 2. require('http').createServer(handler) (line 8). 3. .listen(3000, cb) (line 10). 4. cb logs the readiness line |
 | Decision diamonds | D1 lodash resolvable? D2 port 3000 free? |
-| End points | Success: process idles on the event loop, listening on `::` port 3000. Failure: exit code 1 |
-| System boundaries | Shell, Node.js process, file system (`node_modules`), host TCP stack, stdout/stderr |
+| End points | Success: process idles on the event loop, listening on :: port 3000. Failure: exit code 1 |
+| System boundaries | Shell, Node.js process, file system (node_modules), host TCP stack, stdout/stderr |
 | User touchpoints | The operator's launch command; the stdout readiness line; the stderr stack trace on failure |
-| Error states / recovery | `MODULE_NOT_FOUND` → install lodash or delete line 1, then relaunch. `EADDRINUSE` → free port 3000 or edit line 5, then relaunch. Both are manual |
+| Error states / recovery | MODULE_NOT_FOUND → install lodash or delete line 5, then relaunch. EADDRINUSE → free port 3000 or edit line 10, then relaunch. Both are manual |
 | Timing | Synchronous. Startup to first successful response took about 39 ms in the verification sandbox (observed, not a target) |
 
 #### WF-02 Request–Response (F-002)
 
 | Element | Specification |
-|---|---|
+| --- | --- |
 | Start point | Request bytes arrive on an accepted connection |
-| Process steps | 1. Node.js parses the request line and headers. 2. Node.js emits `'request'`. 3. The handler calls `res.end('Hello, World!\n')`. 4. Node.js writes the status, default headers and body (no body for `HEAD`) |
-| Decision diamonds | D3 valid syntax? D4 headers ≤ 16,384 bytes? D5 headers complete in time? D6 method `HEAD`? |
-| End points | `200 OK` sent; or `400` / `431` / `408` sent and the socket closed |
+| Process steps | 1. Node.js parses the request line and headers. 2. Node.js emits 'request'. 3. The handler calls res.end('Hello, World!\n'). 4. Node.js writes the status, default headers and body (no body for HEAD) |
+| Decision diamonds | D3 valid syntax? D4 headers ≤ 16,384 bytes? D5 headers complete in time? D6 method HEAD? |
+| End points | 200 OK sent; or 400 / 431 / 408 sent and the socket closed |
 | System boundaries | Client ↔ host network ↔ Node.js HTTP parser ↔ application handler |
 | User touchpoints | The client's request and the response it receives. Nothing is shown to the operator |
 | Error states / recovery | Parser rejections go to the client only. The server stays up and needs no recovery |
-| Timing | About 0.40 ms total on loopback, 0.06 ms of it connect time (observed). 200 concurrent requests all returned `200` (Section 2.2.2) |
+| Timing | About 0.40 ms total on loopback, 0.06 ms of it connect time (observed). 200 concurrent requests all returned 200 (Section 2.2.2) |
 
 #### WF-03 Connection Lifecycle
 
 | Element | Specification |
-|---|---|
-| Start point | TCP connection accepted on `::` port 3000 |
+| --- | --- |
+| Start point | TCP connection accepted on :: port 3000 |
 | Process steps | Accept → parse → respond → idle keep-alive → reuse or close |
 | Decision diamonds | D5 headers complete before the deadline? D7 next request inside the keep-alive window? |
-| End points | Server-initiated close (idle timeout, `408`, `400`, `431`) or client-initiated close or abort |
-| System boundaries | Node.js `http` / `net` internals only; no application code runs |
+| End points | Server-initiated close (idle timeout, 408, 400, 431) or client-initiated close or abort |
+| System boundaries | Node.js http / net internals only; no application code runs |
 | User touchpoints | The client sees a reused connection or a closed socket |
 | Error states / recovery | A client abort discards the socket. Other connections are unaffected and the next request succeeds (verified) |
 | Timing | See the timing table below |
@@ -1309,9 +1310,9 @@ This section gives the flowchart elements for each workflow in Section 4.1 and t
 #### WF-04 Process Termination
 
 | Element | Specification |
-|---|---|
+| --- | --- |
 | Start point | SIGINT, SIGTERM, or an uncaught exception |
-| Process steps | Node.js default handling ends the process at once. There is no `server.close()`, drain or cleanup |
+| Process steps | Node.js default handling ends the process at once. There is no server.close(), drain or cleanup |
 | Decision diamonds | None in code |
 | End points | Exit code 130 (SIGINT), 143 (SIGTERM) or 1 (uncaught error) |
 | System boundaries | Operating system signal delivery; parent shell or supervisor |
@@ -1324,14 +1325,14 @@ This section gives the flowchart elements for each workflow in Section 4.1 and t
 The repository defines no SLA, latency target or availability objective (Section 1.2.3). The only timing constraints in force are Node.js defaults, because `createServer` gets no options object. Values below were read from a server instance on v22.23.3 and, where marked, confirmed by measurement.
 
 | Timer / Limit | Default Value | Effect When Exceeded | Verification |
-|---|---|---|---|
-| `headersTimeout` | 60,000 ms | `408 Request Timeout`, socket closed | Measured: `408` after about 89.5 s for incomplete headers |
-| `connectionsCheckingInterval` | 30,000 ms | How often the header and request deadlines are checked, so a `408` arrives 60–90 s after the connection starts | Reported; consistent with the measurement above |
-| `requestTimeout` | 300,000 ms | `408` if the whole request is not received in time | Reported; not exercised |
-| `keepAliveTimeout` (+ `keepAliveTimeoutBuffer`) | 5,000 ms (+ 1,000 ms) | Idle keep-alive socket closed by the server | Measured: closed about 6,011 ms after the response |
-| `server.timeout` | 0 | No socket inactivity timeout | Reported |
-| `maxRequestsPerSocket` | 0 | No limit on requests per connection | Reported |
-| `maxHeaderSize` | 16,384 bytes | `431 Request Header Fields Too Large` | Measured with a 20 KB header |
+| --- | --- | --- | --- |
+| headersTimeout | 60,000 ms | 408 Request Timeout, socket closed | Measured: 408 after about 89.5 s for incomplete headers |
+| connectionsCheckingInterval | 30,000 ms | How often the header and request deadlines are checked, so a 408 arrives 60–90 s after the connection starts | Reported; consistent with the measurement above |
+| requestTimeout | 300,000 ms | 408 if the whole request is not received in time | Reported; not exercised |
+| keepAliveTimeout (+ keepAliveTimeoutBuffer) | 5,000 ms (+ 1,000 ms) | Idle keep-alive socket closed by the server | Measured: closed about 6,011 ms after the response |
+| server.timeout | 0 | No socket inactivity timeout | Reported |
+| maxRequestsPerSocket | 0 | No limit on requests per connection | Reported |
+| maxHeaderSize | 16,384 bytes | 431 Request Header Fields Too Large | Measured with a 20 KB header |
 
 Because the Node.js version is not pinned (constraint C-003), these values can change with the runtime.
 
@@ -1340,25 +1341,25 @@ Because the Node.js version is not pinned (constraint C-003), these values can c
 #### Business Rules at Each Step
 
 | Workflow Step | Rule | Enforced By | Evidence |
-|---|---|---|---|
-| WF-01 module load | lodash must load before the server is created | Statement order | Lines 1, 3 (F-005-RQ-001) |
-| WF-01 bind | One listener on port 3000 per host; no fallback port | Host TCP stack | Line 5 (F-003-RQ-001, F-003-RQ-003) |
-| WF-01 readiness | The readiness line is printed only after a successful bind, and its text is a literal (`127.0.0.1`), not the real bind address (`::`) | `listening` callback | Line 5 (F-004-RQ-001, F-004-RQ-002) |
-| WF-02 handling | Every request gets one fixed response, with no routing, content negotiation or per-request state | Inline handler | Line 4 (F-002-RQ-001, F-002-RQ-005) |
-| WF-02 response | Status and headers are Node.js defaults; no `Content-Type` | Node.js `http` | Line 4 (F-002-RQ-002, F-002-RQ-003) |
-| WF-04 shutdown | No graceful shutdown; termination is immediate | Node.js defaults | Lines 3–5 (constraint C-004) |
+| --- | --- | --- | --- |
+| WF-01 module load | lodash must load before the server is created | Statement order | Lines 5, 8 (F-005-RQ-001) |
+| WF-01 bind | One listener on port 3000 per host; no fallback port | Host TCP stack | Line 10 (F-003-RQ-001, F-003-RQ-003) |
+| WF-01 readiness | The readiness line is printed only after a successful bind, and its text is a literal (127.0.0.1), not the real bind address (::) | listening callback | Line 10 (F-004-RQ-001, F-004-RQ-002) |
+| WF-02 handling | Every request gets one fixed response, with no routing, content negotiation or per-request state | Inline handler | Line 9 (F-002-RQ-001, F-002-RQ-005) |
+| WF-02 response | Status and headers are Node.js defaults; no Content-Type | Node.js http | Line 9 (F-002-RQ-002, F-002-RQ-003) |
+| WF-04 shutdown | No graceful shutdown; termination is immediate | Node.js defaults | Lines 8–10 (constraint C-004) |
 
 #### Data Validation Requirements
 
 The application validates nothing: it never reads `req`. All request validation comes from the Node.js HTTP parser and runs before the handler.
 
 | Check | Limit | Enforced By | Failure Response |
-|---|---|---|---|
-| HTTP syntax | Valid HTTP/1.x request line and headers | Node.js parser | `400 Bad Request`, `Connection: close` (sent for request line `GARBAGE`) |
-| Header size | ≤ 16,384 bytes | Node.js parser | `431 Request Header Fields Too Large` |
-| Header arrival | Headers complete within 60 s, checked every 30 s | Node.js connection checker | `408 Request Timeout` |
-| Request arrival | Whole request within 300 s | Node.js connection checker | `408 Request Timeout` |
-| Method, path, query, body | None | Not validated | Always `200 OK` |
+| --- | --- | --- | --- |
+| HTTP syntax | Valid HTTP/1.x request line and headers | Node.js parser | 400 Bad Request, Connection: close (sent for request line GARBAGE) |
+| Header size | ≤ 16,384 bytes | Node.js parser | 431 Request Header Fields Too Large |
+| Header arrival | Headers complete within 60 s, checked every 30 s | Node.js connection checker | 408 Request Timeout |
+| Request arrival | Whole request within 300 s | Node.js connection checker | 408 Request Timeout |
+| Method, path, query, body | None | Not validated | Always 200 OK |
 | Dependency version / integrity | None; no manifest or lockfile | Not validated (constraint C-002) | Any installed lodash is accepted |
 
 #### Authorization Checkpoints
@@ -1366,11 +1367,11 @@ The application validates nothing: it never reads `req`. All request validation 
 The workflows contain **no** authorization checkpoint. Any client that can reach the host on port 3000 is served.
 
 | Control | Status | Consequence |
-|---|---|---|
+| --- | --- | --- |
 | Authentication | None | Every request is anonymous |
 | Authorization / roles | None | No checkpoint exists in WF-02 |
-| Network access control | None in code; binds `::`, all interfaces | Exposure is set by the host firewall and network only (Section 2.4.3) |
-| Transport security | Plain `http`; no TLS | Requests and responses travel in cleartext |
+| Network access control | None in code; binds ::, all interfaces | Exposure is set by the host firewall and network only (Section 2.4.3) |
+| Transport security | Plain http; no TLS | Requests and responses travel in cleartext |
 | Rate limiting / quotas | None | Throughput is bounded only by the single event loop |
 
 #### Regulatory Compliance Checks
@@ -1388,22 +1389,22 @@ The application keeps no state of its own. The only state is held by the Node.js
 **Process lifecycle (WF-01, WF-04)**
 
 | State | Entered When | Next State(s) |
-|---|---|---|
-| Launching | The shell starts `node "server (1).js"` | Loading Dependencies |
-| Loading Dependencies | Line 1 runs `require('lodash')` | Server Created; or Terminated (exit 1, `MODULE_NOT_FOUND`) |
-| Server Created | Line 3 returns an unreferenced `http.Server` | Binding |
-| Binding | Line 5 calls `listen(3000)`. The script body has now finished, and the open handle keeps the event loop alive | Listening; or Terminated (exit 1, `EADDRINUSE`) |
-| Listening | The `'listening'` event fires and the readiness line is printed | Terminated (exit 130 on SIGINT, 143 on SIGTERM) |
+| --- | --- | --- |
+| Launching | The shell starts node "server (1).js" | Loading Dependencies |
+| Loading Dependencies | Line 5 runs require('lodash') | Server Created; or Terminated (exit 1, MODULE_NOT_FOUND) |
+| Server Created | Line 8 returns an unreferenced http.Server | Binding |
+| Binding | Line 10 calls listen(3000). The script body has now finished, and the open handle keeps the event loop alive | Listening; or Terminated (exit 1, EADDRINUSE) |
+| Listening | The 'listening' event fires and the readiness line is printed | Terminated (exit 130 on SIGINT, 143 on SIGTERM) |
 | Terminated | Process exit | None. Restart is external |
 
 **Connection lifecycle (WF-02, WF-03)**
 
 | State | Entered When | Next State(s) |
-|---|---|---|
-| Accepted | A TCP connection arrives on `::` port 3000 | Reading Request |
-| Reading Request | Bytes are being parsed | Dispatched; or Rejected (`400`, `431`, `408`); or Closed (client abort) |
-| Dispatched | `'request'` emitted to the handler | Responded |
-| Responded | `res.end` finishes the response | Idle Keep-Alive |
+| --- | --- | --- |
+| Accepted | A TCP connection arrives on :: port 3000 | Reading Request |
+| Reading Request | Bytes are being parsed | Dispatched; or Rejected (400, 431, 408); or Closed (client abort) |
+| Dispatched | 'request' emitted to the handler | Responded |
+| Responded | res.end finishes the response | Idle Keep-Alive |
 | Idle Keep-Alive | Waiting for the next request | Reading Request (reuse); or Closed (about 6 s idle, or the client closes) |
 | Rejected | Node.js has sent an error status | Closed |
 | Closed | Socket destroyed | None |
@@ -1415,10 +1416,10 @@ There are none. The process opens no database, writes no file, and keeps no sess
 #### Caching Requirements
 
 | Layer | Behaviour |
-|---|---|
+| --- | --- |
 | Application cache | None. The response is a string literal rebuilt per call, with no lookups to cache |
-| HTTP caching | None. No `Cache-Control`, `ETag`, `Last-Modified` or `Expires` headers are sent |
-| Module cache | Node.js's CommonJS loader keeps `lodash` and `http` in its module cache for the life of the process. This is runtime behaviour, not application logic |
+| HTTP caching | None. No Cache-Control, ETag, Last-Modified or Expires headers are sent |
+| Module cache | Node.js's CommonJS loader keeps lodash and http in its module cache for the life of the process. This is runtime behaviour, not application logic |
 
 #### Transaction Boundaries
 
@@ -1429,12 +1430,12 @@ Each request–response exchange is a self-contained unit that starts when the r
 #### Error Catalogue
 
 | ID | Error | Detection Point | Handling / Outcome | Recovery |
-|---|---|---|---|---|
-| E-01 | `Cannot find module 'lodash'` (`MODULE_NOT_FOUND`) | Line 1 (`server (1).js:1:11`) | Not caught. Stack trace on stderr; exit 1; no socket opened | Make lodash resolvable or delete the unused line 1, then relaunch |
-| E-02 | `listen EADDRINUSE: address already in use :::3000` | Line 5, through the server's `'error'` event | No `'error'` listener, so it is uncaught. Stack trace on stderr; exit 1 | Free port 3000 or edit the literal on lines 5 (port and message), then relaunch |
-| E-03 | Malformed request | Node.js HTTP parser | Default `clientError` handling: `400 Bad Request`, socket closed | Client corrects the request |
-| E-04 | Headers over 16,384 bytes | Node.js HTTP parser | `431 Request Header Fields Too Large`, socket closed | Client reduces its headers |
-| E-05 | Headers or request not complete in time | Node.js connection checker | `408 Request Timeout`, socket closed | Client retries |
+| --- | --- | --- | --- | --- |
+| E-01 | Cannot find module 'lodash' (MODULE_NOT_FOUND) | Line 5 (server (1).js:5:11) | Not caught. Stack trace on stderr; exit 1; no socket opened | Make lodash resolvable or delete the unused line 5, then relaunch |
+| E-02 | listen EADDRINUSE: address already in use :::3000 | Line 10, through the server's 'error' event | No 'error' listener, so it is uncaught. Stack trace on stderr; exit 1 | Free port 3000 or edit the literal on line 10 (port and message), then relaunch |
+| E-03 | Malformed request | Node.js HTTP parser | Default clientError handling: 400 Bad Request, socket closed | Client corrects the request |
+| E-04 | Headers over 16,384 bytes | Node.js HTTP parser | 431 Request Header Fields Too Large, socket closed | Client reduces its headers |
+| E-05 | Headers or request not complete in time | Node.js connection checker | 408 Request Timeout, socket closed | Client retries |
 | E-06 | Client aborts mid-request | Socket close | Socket discarded silently; the server keeps serving | None required |
 | E-07 | SIGINT / SIGTERM | Operating system | No handler. Immediate exit (130 / 143); open sockets dropped | External restart |
 | E-08 | Server not running | Client connect | Connection refused | Operator restarts the process |
@@ -1452,22 +1453,22 @@ None exist. There is no alternate port, no degraded mode when lodash is absent, 
 #### Error Notification Flows
 
 | Channel | Carries | Recipient |
-|---|---|---|
+| --- | --- | --- |
 | stderr | Node.js stack trace for E-01 and E-02 | Operator console or a supervisor's log capture |
-| Process exit code | `1` (E-01, E-02), `130` (SIGINT), `143` (SIGTERM) | Parent shell or supervisor |
-| HTTP status | `400`, `431`, `408` for E-03 to E-05 | The affected client only |
+| Process exit code | 1 (E-01, E-02), 130 (SIGINT), 143 (SIGTERM) | Parent shell or supervisor |
+| HTTP status | 400, 431, 408 for E-03 to E-05 | The affected client only |
 | Server-side logs, metrics, alerts | None | Nobody. Request errors leave no trace on the server (F-004-RQ-003, Section 1.2.3) |
 
 #### Recovery Procedures
 
-1. **E-01 (missing lodash):** install lodash in a `node_modules` folder on the file's resolution path, or delete line 1, which no other line references (F-005-RQ-003). Relaunch with `node "server (1).js"`.
-2. **E-02 (port conflict):** find and stop the process holding TCP port 3000 with host tooling. Alternatively, change the literal `3000` on line 5 and the URL in the same line's log message together (Section 2.4.4). Relaunch.
+1. **E-01 (missing lodash):** install lodash in a `node_modules` folder on the file's resolution path, or delete line 5, which no other line references (F-005-RQ-003). Relaunch with `node "server (1).js"`.
+2. **E-02 (port conflict):** find and stop the process holding TCP port 3000 with host tooling. Alternatively, change the literal `3000` on line 10 and the URL in the same line's log message together (Section 2.4.4). Relaunch.
 3. **E-07 / unexpected exit:** relaunch by hand. Clients get connection refused (E-08) until the readiness line appears again.
 4. **Verify recovery:** confirm the readiness line on stdout, then confirm that `curl -i http://127.0.0.1:3000/` returns `200 OK` with `Content-Length: 14`.
 
 ## 4.4 Required Diagrams
 
-The diagrams below model the behaviour of `server (1).js` exactly as observed on Node.js v22.23.3. Decision IDs (D1–D7) refer to Section 4.1.1 and error IDs (E-01–E-08) to Section 4.3.2. They extend the summary startup flowchart in Section 1.2.2 and the deployment flow in Section 3.6.5.
+The diagrams below model the behaviour of `server (1).js` exactly as observed on Node.js v22.23.3. Line numbers refer to the ten-line file on `0610_02` (`93f60af`); the four JSDoc comments (lines 1-3 and line 7) carry no flow, because nothing executes on them. Decision IDs (D1–D7) refer to Section 4.1.1 and error IDs (E-01–E-08) to Section 4.3.2. They extend the summary startup flowchart in Section 1.2.2 and the deployment flow in Section 3.6.5.
 
 ### 4.4.1 High-Level System Workflow
 
@@ -1483,10 +1484,10 @@ flowchart TB
         OpStop(["End: exit 130 or 143"])
     end
     subgraph LaneApp["server (1).js"]
-        L1["Line 1: require lodash"]
-        L3["Line 3: createServer with inline handler"]
-        L5["Line 5: listen 3000 with log callback"]
-        H4["Line 4: res.end Hello, World!"]
+        L5["Line 5: require lodash"]
+        L8["Line 8: createServer with inline handler"]
+        L10["Line 10: listen 3000 with log callback"]
+        H9["Line 9: res.end Hello, World!"]
     end
     subgraph LaneRt["Node.js runtime"]
         Resolve{"D1: lodash resolvable?"}
@@ -1500,14 +1501,14 @@ flowchart TB
         Req(["Start: any request to port 3000"])
         Resp(["End: response received"])
     end
-    OpStart --> L1 --> Resolve
+    OpStart --> L5 --> Resolve
     Resolve -- No --> SeeErr
-    Resolve -- Yes --> L3 --> L5 --> Bind
+    Resolve -- Yes --> L8 --> L10 --> Bind
     Bind -- No --> SeeErr
     Bind -- Yes --> SeeReady --> Idle
     Req --> Idle --> Parse
     Parse -- No --> Reject --> Resp
-    Parse -- Yes --> H4 --> Write --> Resp
+    Parse -- Yes --> H9 --> Write --> Resp
     Write -->|"keep-alive, D7"| Idle
     Idle -.->|"while serving"| SendSig --> OpStop
 ```
@@ -1516,23 +1517,23 @@ flowchart TB
 
 The five features of Section 2.1 run in a fixed chain: F-005 → F-001 → F-003 → F-004 at startup, then F-002 for every request.
 
-#### 4.4.2.1 F-005 Lodash Module Loading (line 1)
+#### 4.4.2.1 F-005 Lodash Module Loading (line 5)
 
 ```mermaid
 flowchart TD
-    A1(["Start: line 1 executes"]) --> A2["CommonJS loader searches node_modules<br/>folders from the file's directory upward"]
+    A1(["Start: line 5 executes"]) --> A2["CommonJS loader searches node_modules<br/>folders from the file's directory upward"]
     A2 --> A3{"lodash found?"}
     A3 -- Yes --> A4["Load module, store in module cache,<br/>bind to _ (never referenced again)"]
-    A4 --> A5(["End: continue to line 3, F-001"])
-    A3 -- No --> A6["Throw MODULE_NOT_FOUND<br/>at server (1).js:1:11"]
+    A4 --> A5(["End: continue to line 8, F-001"])
+    A3 -- No --> A6["Throw MODULE_NOT_FOUND<br/>at server (1).js:5:11"]
     A6 --> A7(["End: exit code 1, no socket, no log line"])
 ```
 
-#### 4.4.2.2 F-001 HTTP Server Initialization (line 3)
+#### 4.4.2.2 F-001 HTTP Server Initialization (line 8)
 
 ```mermaid
 flowchart TD
-    B1(["Start: line 3 executes"]) --> B2["require http built-in module"]
+    B1(["Start: line 8 executes"]) --> B2["require http built-in module"]
     B2 --> B3["createServer with inline arrow function<br/>no options object"]
     B3 --> B4["Node.js defaults applied:<br/>16,384-byte headers, 60 s headers,<br/>300 s request, 5 s keep-alive"]
     B4 --> B5["Arrow function registered<br/>as the request listener"]
@@ -1540,7 +1541,7 @@ flowchart TD
     B6 --> B7(["End: hand off to F-003"])
 ```
 
-#### 4.4.2.3 F-003 TCP Listener on Port 3000 (line 5)
+#### 4.4.2.3 F-003 TCP Listener on Port 3000 (line 10)
 
 ```mermaid
 flowchart TD
@@ -1552,7 +1553,7 @@ flowchart TD
     C6 --> C7(["End: invoke F-004 callback"])
 ```
 
-#### 4.4.2.4 F-004 Startup Readiness Logging (line 5)
+#### 4.4.2.4 F-004 Startup Readiness Logging (line 10)
 
 ```mermaid
 flowchart TD
@@ -1561,7 +1562,7 @@ flowchart TD
     D2n -.- D4n["Caveat: real bind is ::<br/>message is not derived from server.address"]
 ```
 
-#### 4.4.2.5 F-002 Uniform Fixed-Response Handling (lines 3–4)
+#### 4.4.2.5 F-002 Uniform Fixed-Response Handling (lines 8–9)
 
 The parser gates are checked while bytes are read, not in a fixed order. They are drawn in sequence for readability.
 
@@ -1582,7 +1583,7 @@ flowchart LR
         NoBody["Status and headers only<br/>no body, no Content-Length"]
         CloseErr["Send error status<br/>and close socket"]
     end
-    subgraph HLane["Inline handler, line 4"]
+    subgraph HLane["Inline handler, line 9"]
         Ignore["Ignore req entirely"]
         EndRes["res.end Hello, World!"]
     end
@@ -1610,8 +1611,8 @@ flowchart TD
         Q2{"D2: port 3000 free?"}
         Fatal["Uncaught error<br/>stack trace on stderr"]
         Exit1(["Exit code 1"])
-        Fix1["E-01 recovery:<br/>install lodash or delete line 1"]
-        Fix2["E-02 recovery:<br/>free port 3000 or edit line 5"]
+        Fix1["E-01 recovery:<br/>install lodash or delete line 5"]
+        Fix2["E-02 recovery:<br/>free port 3000 or edit line 10"]
         Up["Listening, readiness line printed"]
     end
     subgraph RequestErr["Request errors: client-facing"]
@@ -1688,7 +1689,7 @@ sequenceDiagram
     autonumber
     participant C as HTTP client
     participant P as Node.js HTTP layer
-    participant H as Inline handler, line 4
+    participant H as Inline handler, line 9
     C->>P: TCP connect to port 3000
     C->>P: GET /any/path HTTP/1.1
     P->>P: parse request and enforce header limit
@@ -1732,10 +1733,10 @@ sequenceDiagram
 ```mermaid
 stateDiagram-v2
     [*] --> Launching: node with quoted file name
-    Launching --> LoadingDeps: line 1 require lodash
+    Launching --> LoadingDeps: line 5 require lodash
     LoadingDeps --> Terminated: MODULE_NOT_FOUND, exit 1
     LoadingDeps --> ServerCreated: lodash resolved
-    ServerCreated --> Binding: line 5 listen 3000
+    ServerCreated --> Binding: line 10 listen 3000
     Binding --> Terminated: EADDRINUSE, exit 1
     Binding --> Listening: listening event, readiness line
     Listening --> Listening: serve request
@@ -1766,12 +1767,14 @@ stateDiagram-v2
 
 #### Repository Files and Folders
 
-- `server (1).js`: the only source file (commit `f0ba73b`). Line 1 holds the lodash import (WF-01, D1, E-01). Line 3 creates the HTTP server and registers the inline request listener. Line 4 holds the fixed `res.end('Hello, World!\n')` response (WF-02). Line 5 holds `listen(3000)` with the readiness log callback (D2, E-02, F-004). There are no error, signal or `clientError` handlers.
-- `` (repository root): holds only `server (1).js` and `.git`. There are no `.blitzyignore`, manifest, lockfile, configuration, tests, CI or supervisor files, which establishes that there is no persistence, caching, retry, fallback, authorization or batch processing.
+- `server (1).js`: the only source file, ten lines in the `0610_02` state at `93f60af`, of which four are JSDoc comments (lines 1-3 and line 7) that execute nothing. Line 5 holds the lodash import (WF-01, D1, E-01). Line 8 creates the HTTP server and registers the inline request listener. Line 9 holds the fixed `res.end('Hello, World!\n')` response (WF-02). Line 10 holds `listen(3000)` with the readiness log callback (D2, E-02, F-004). There are no error, signal or `clientError` handlers.
+- `README.md`: the project name `some_files_01`, the install step `npm install lodash` and the run step `node "server (1).js"`. It is the only in-repo statement of either step.
+- `blitzy/documentation/Technical Specifications.md`: the tracked copy of this specification, present on `0610_02`.
+- \`\` (repository root): holds `server (1).js`, `README.md` and the `blitzy/` documentation folder alongside `.git` on `0610_02`. There are no `.blitzyignore`, manifest, lockfile, configuration, tests, CI or supervisor files, which establishes that there is no persistence, caching, retry, fallback, authorization or batch processing.
 
 #### Runtime Verification (Node.js v22.23.3, lodash made resolvable in a scratch copy)
 
-- Clean-checkout launch: `MODULE_NOT_FOUND` at `server (1).js:1:11`, exit 1.
+- Clean-checkout launch: `MODULE_NOT_FOUND` at `server (1).js:5:11`, exit 1.
 - Second instance on an occupied port: `EADDRINUSE :::3000`, exit 1.
 - Default response: `200 OK` with `Date`, `Connection: keep-alive`, `Keep-Alive: timeout=5`, `Content-Length: 14`.
 - Parser rejections: `400` for the request line `GARBAGE`, `431` for a 20 KB header, `408` about 89.5 s after incomplete headers.
@@ -1796,27 +1799,27 @@ stateDiagram-v2
 
 ## 5.1 High-Level Architecture
 
-This section describes the architecture of commit `f0ba73b`, which is identical on `main` and `0610_02`. The whole system is the single file `server (1).js`. Runtime behaviour was confirmed on Node.js v22.23.3 (assumption A-002, Section 2.6.1).
+This section describes the architecture of the `0610_02` state at `93f60af`; `main` still holds the original `f0ba73b` version. The whole system is the single file `server (1).js`, now ten lines. Runtime behaviour was confirmed on Node.js v22.23.3 (assumption A-002, Section 2.6.1).
 
 ### 5.1.1 System Overview
 
 #### Architecture Style and Rationale
 
-The system is a **single-process, single-file, event-driven HTTP service**. `server (1).js` holds three code statements that run top to bottom as a CommonJS script. They build one `http.Server` from Node.js's built-in `http` module and bind it to TCP port 3000. After startup, all work happens in callbacks on the Node.js event loop. Nothing sits between the network socket and the request handler: no tiers, layers, modules or services.
+The system is a **single-process, single-file, event-driven HTTP service**. `server (1).js` holds three code statements, preceded by four JSDoc comments, that run top to bottom as a CommonJS script. They build one `http.Server` from Node.js's built-in `http` module and bind it to TCP port 3000. After startup, all work happens in callbacks on the Node.js event loop. Nothing sits between the network socket and the request handler: no tiers, layers, modules or services.
 
 | Style Attribute | As Built | Evidence |
-|---|---|---|
+| --- | --- | --- |
 | Deployment unit | One script and one OS process, with no build step | Repository root; Section 3.6.2 |
-| Execution model | Non-blocking I/O on one JavaScript event-loop thread. No `cluster` module or worker threads | Lines 3–5; runtime check: JavaScript runs on the main thread, alongside Node.js's internal helper threads |
-| Interaction model | Synchronous HTTP/1.1 request–response | Lines 3–4 |
-| State model | Stateless. Nothing is kept between requests | Line 4; Section 4.3.1 |
-| Configuration model | Literals in code, with no external configuration | Line 5; constraint C-001 |
+| Execution model | Non-blocking I/O on one JavaScript event-loop thread. No cluster module or worker threads | Lines 8–10; runtime check: JavaScript runs on the main thread, alongside Node.js's internal helper threads |
+| Interaction model | Synchronous HTTP/1.1 request–response | Lines 8–9 |
+| State model | Stateless. Nothing is kept between requests | Line 9; Section 4.3.1 |
+| Configuration model | Literals in code, with no external configuration | Line 10; constraint C-001 |
 
-**Rationale.** The repository records no design rationale: there is no README, code comment or decision record (assumption A-001). The structure matches the canonical minimal Node.js "Hello, World" server, the smallest program that accepts HTTP connections and answers them (Section 1.2.1). Every property in this section follows from that minimalism. None comes from a stated requirement.
+**Rationale.** The repository records no design rationale: there is no decision record or design note, `README.md` gives only the install and run steps, and the four JSDoc comments (lines 1-3 and line 7) restate the response behavior (assumption A-001). The structure matches the canonical minimal Node.js "Hello, World" server, the smallest program that accepts HTTP connections and answers them (Section 1.2.1). Every property in this section follows from that minimalism. None comes from a stated requirement.
 
 #### Key Architectural Principles and Patterns
 
-- **Event-driven callbacks.** The code registers exactly two listeners: the `'request'` handler passed to `createServer` (line 3) and the `'listening'` callback passed to `listen` (line 5). Node.js defaults govern every other event (Section 4.1.2).
+- **Event-driven callbacks.** The code registers exactly two listeners: the `'request'` handler passed to `createServer` (line 8) and the `'listening'` callback passed to `listen` (line 10). Node.js defaults govern every other event (Section 4.1.2).
 - **Stateless request handling.** The handler never reads `req` and always writes the same constant. Every request is independent, and any two instances behave identically (F-002-RQ-005).
 - **Runtime defaults over configuration.** Neither `createServer` nor `listen` receives an options object. Node.js supplies the status code, headers, parser limits, timeouts and keep-alive behaviour.
 - **Fail-fast startup.** The code has no `try`/`catch` and no `'error'` listener. A missing module or an occupied port ends the process with exit code 1 before any request is served (E-01, E-02, Section 4.3.2).
@@ -1830,22 +1833,22 @@ The code has none of these patterns: layered or MVC structure, routing, middlewa
 The system boundary encloses the code in `server (1).js`. The Node.js runtime is the platform that code runs on. lodash, the host network stack, the operator console and the parent process are all external.
 
 | Interface | Direction | Contract | Source |
-|---|---|---|---|
-| HTTP endpoint | Inbound | HTTP/1.1 over plaintext TCP on all interfaces (`::`), port 3000. Any method and path; always `200 OK` with `Hello, World!\n` | Lines 3–5 |
-| Module resolution | Inbound, at startup | `require('lodash')`, resolved through the `node_modules` folders above the file's directory | Line 1 |
-| Readiness output | Outbound | One stdout line: `Server running at http://127.0.0.1:3000/` | Line 5 |
+| --- | --- | --- | --- |
+| HTTP endpoint | Inbound | HTTP/1.1 over plaintext TCP on all interfaces (::), port 3000. Any method and path; always 200 OK with Hello, World!\n | Lines 8–10 |
+| Module resolution | Inbound, at startup | require('lodash'), resolved through the node_modules folders above the file's directory | Line 5 |
+| Readiness output | Outbound | One stdout line: Server running at http://127.0.0.1:3000/ | Line 10 |
 | Fatal diagnostics | Outbound | Node.js stack trace on stderr | Node.js default (E-01, E-02) |
-| Process exit status | Outbound | `1` (startup failure), `130` (SIGINT), `143` (SIGTERM) | Node.js default (Section 4.3.2) |
+| Process exit status | Outbound | 1 (startup failure), 130 (SIGINT), 143 (SIGTERM) | Node.js default (Section 4.3.2) |
 | OS signals | Inbound | SIGINT and SIGTERM cause default termination; the code registers no handlers | WF-04 (Section 4.1) |
 
 #### Architectural Assumptions
 
 | ID | Assumption | Basis |
-|---|---|---|
+| --- | --- | --- |
 | AA-01 | The code as built is the architecture. No intended target architecture is recorded | A-001 |
 | AA-02 | Node.js v22.23.3 defaults stand for the runtime's behaviour. Other versions were not checked | A-002, C-003 |
 | AA-03 | lodash is supplied from outside the repository for every run | A-003, C-002 |
-| AA-04 | The bind to `::` is the real network exposure. The `127.0.0.1` in the log is display text only | A-004 |
+| AA-04 | The bind to :: is the real network exposure. The 127.0.0.1 in the log is display text only | A-004 |
 | AA-05 | Any network access control, TLS termination, process supervision or load balancing comes from the host environment, outside the repository | Section 3.6.3 |
 
 ### 5.1.2 Core Components
@@ -1855,36 +1858,36 @@ The code has no classes, named functions or exports. Its components are the four
 **Responsibilities and Dependencies**
 
 | Component Name | Primary Responsibility | Key Dependencies | Location |
-|---|---|---|---|
-| Lodash Import | Loads lodash into `_`. The binding is never read | The lodash package on the module resolution path; the CommonJS loader | Line 1 |
-| HTTP Server Factory | Builds one `http.Server` with an inline handler and no options | Node.js built-in `http` module | Line 3 |
-| Request Handler | Ends every response with `Hello, World!\n` | `http.ServerResponse` (`res.end`) | Lines 3–4 |
-| Listener and Startup Callback | Binds TCP port 3000 on `::` and prints the readiness line | Host TCP stack; `console.log` to stdout | Line 5 |
+| --- | --- | --- | --- |
+| Lodash Import | Loads lodash into _. The binding is never read | The lodash package on the module resolution path; the CommonJS loader | Line 5 |
+| HTTP Server Factory | Builds one http.Server with an inline handler and no options | Node.js built-in http module | Line 8 |
+| Request Handler | Ends every response with Hello, World!\n | http.ServerResponse (res.end) | Lines 8–9 |
+| Listener and Startup Callback | Binds TCP port 3000 on :: and prints the readiness line | Host TCP stack; console.log to stdout | Line 10 |
 | Node.js HTTP Layer (runtime) | Parses requests, enforces limits and timeouts, writes the default status and headers, manages keep-alive | Node.js v22.23.3 internals: llhttp 9.4.3 parser, libuv 1.51.0 event loop | Runtime, outside the repository |
 
 **Integration Points and Critical Considerations**
 
 | Component Name | Integration Points | Critical Considerations |
-|---|---|---|
-| Lodash Import | Host file system (`node_modules`), at startup only | Undeclared and unpinned. A missing module aborts startup (E-01). Deleting line 1 changes no other behaviour |
-| HTTP Server Factory | Node.js `http` API | The instance is never referenced, so it cannot be closed, tuned or given more listeners (C-004) |
-| Request Handler | `'request'` event from the HTTP layer | Ignores all request input, sends no `Content-Type`, and cannot throw |
-| Listener and Startup Callback | Host network (`::`, port 3000); stdout | Port is a literal (C-001). With no `'error'` listener, a port conflict crashes the process (E-02). The logged URL understates the real exposure (AA-04) |
+| --- | --- | --- |
+| Lodash Import | Host file system (node_modules), at startup only | Undeclared and unpinned. A missing module aborts startup (E-01). Deleting line 5 changes no other behaviour |
+| HTTP Server Factory | Node.js http API | The instance is never referenced, so it cannot be closed, tuned or given more listeners (C-004) |
+| Request Handler | 'request' event from the HTTP layer | Ignores all request input, sends no Content-Type, and cannot throw |
+| Listener and Startup Callback | Host network (::, port 3000); stdout | Port is a literal (C-001). With no 'error' listener, a port conflict crashes the process (E-02). The logged URL understates the real exposure (AA-04) |
 | Node.js HTTP Layer (runtime) | TCP sockets, Request Handler, HTTP clients | Behaviour depends on the unpinned Node.js version (C-003). Its defaults are the only protections: a 16,384-byte header limit, a 60 s headers timeout and a 300 s request timeout |
 
 ### 5.1.3 Data Flow Description
 
 #### Primary Data Flows
 
-**Startup flow (WF-01).** At startup, data moves one way: from the host into process memory, then out to stdout. The CommonJS loader reads `server (1).js`. It then resolves `lodash` from `node_modules` synchronously and binds the module object to `_`, where it stays unread. `require('http')` returns the built-in module. `createServer` returns an `http.Server` that holds a reference to the handler. `listen(3000)` asks the OS for a socket on `::`. When the bind succeeds, the `'listening'` event triggers the only stdout write.
+**Startup flow (WF-01).** At startup, data moves one way: from the host into process memory, then out to stdout. The CommonJS loader reads `server (1).js`, whose comments are discarded before execution. It then resolves `lodash` from `node_modules` synchronously and binds the module object to `_`, where it stays unread. `require('http')` returns the built-in module. `createServer` returns an `http.Server` that holds a reference to the handler. `listen(3000)` asks the OS for a socket on `::`. When the bind succeeds, the `'listening'` event triggers the only stdout write.
 
 **Request flow (WF-02, WF-03).** Client bytes arrive on the TCP socket. The Node.js HTTP layer parses them into an `IncomingMessage` (`req`) and a `ServerResponse` (`res`), then emits `'request'`. The handler passes a constant string to `res.end`. Node.js encodes the string as UTF-8 and adds `Content-Length: 14`, `Date`, `Connection: keep-alive` and `Keep-Alive: timeout=5`. It then writes `200 OK`, the headers and the body to the socket. The method, URL, headers and body all enter the process, but no application code reads them. Request data goes no further than the parser and the `req` object.
 
 #### Integration Patterns and Protocols
 
 | Flow | Pattern | Protocol / Format | Frequency |
-|---|---|---|---|
-| Module load | Synchronous in-process call | CommonJS `require`, returning a JavaScript module object | Once, at startup |
+| --- | --- | --- | --- |
+| Module load | Synchronous in-process call | CommonJS require, returning a JavaScript module object | Once, at startup |
 | Request–response | Synchronous request–response over a reusable connection | HTTP/1.1 over plaintext TCP; text body with no declared media type | Per request |
 | Readiness signal | One-shot notification | Plain-text line on stdout | Once, after the bind |
 | Fatal diagnostics | Uncaught exception | Node.js stack trace on stderr | Only on startup failure |
@@ -1894,7 +1897,7 @@ The code has no classes, named functions or exports. Its components are the four
 
 The application code transforms no data. The two transformations both happen inside the Node.js HTTP layer:
 
-1. **Parsing (bytes to `req`).** Raw request bytes become an `IncomingMessage`. Requests that are malformed, have oversized headers or arrive too slowly are rejected at this point with `400`, `431` or `408`. The handler never runs for them (D3–D5, Section 4.1.1).
+1. **Parsing (bytes to** `req`**).** Raw request bytes become an `IncomingMessage`. Requests that are malformed, have oversized headers or arrive too slowly are rejected at this point with `400`, `431` or `408`. The handler never runs for them (D3–D5, Section 4.1.1).
 2. **Serialisation (string to HTTP response).** The literal `'Hello, World!\n'` becomes an HTTP/1.1 response: status line, default headers, computed `Content-Length` and a UTF-8 body. For `HEAD` requests the body is left out (D6).
 
 #### Key Data Stores and Caches
@@ -1908,11 +1911,11 @@ The code calls no external API, database, message broker, identity provider or o
 **Integration Type, Pattern and Protocol**
 
 | System Name | Integration Type | Data Exchange Pattern | Protocol/Format |
-|---|---|---|---|
-| HTTP clients | Inbound network service | Synchronous request–response with keep-alive reuse | HTTP/1.1 over plaintext TCP, `::` port 3000 |
-| lodash package | In-process library, unused | One synchronous load at startup | CommonJS module from `node_modules` |
-| Node.js runtime (`http` built-in) | Platform API | In-process calls and event callbacks | JavaScript API: `createServer`, `listen`, `res.end` |
-| Host OS network stack | Socket bind and accept | One bind at startup, then one accept per connection | TCP on the IPv6 wildcard address `::` |
+| --- | --- | --- | --- |
+| HTTP clients | Inbound network service | Synchronous request–response with keep-alive reuse | HTTP/1.1 over plaintext TCP, :: port 3000 |
+| lodash package | In-process library, unused | One synchronous load at startup | CommonJS module from node_modules |
+| Node.js runtime (http built-in) | Platform API | In-process calls and event callbacks | JavaScript API: createServer, listen, res.end |
+| Host OS network stack | Socket bind and accept | One bind at startup, then one accept per connection | TCP on the IPv6 wildcard address :: |
 | Operator console | Output streams | One-way writes | Plain text on stdout and stderr |
 | Parent process or supervisor | Process control | Signals in, exit code out | POSIX signals; integer exit codes |
 
@@ -1921,8 +1924,8 @@ The code calls no external API, database, message broker, identity provider or o
 The repository defines no SLA for any integration. The right-hand column shows the limits that apply in practice, observed on Node.js v22.23.3.
 
 | System Name | SLA Defined in Repository | Governing Limits in Practice |
-|---|---|---|
-| HTTP clients | None | Headers ≤ 16,384 bytes; headers must arrive within 60 s (`headersTimeout`, enforced 60–90 s after the connection opens) and the request within 300 s (`requestTimeout`); idle keep-alive sockets close after about 6 s |
+| --- | --- | --- |
+| HTTP clients | None | Headers ≤ 16,384 bytes; headers must arrive within 60 s (headersTimeout, enforced 60–90 s after the connection opens) and the request within 300 s (requestTimeout); idle keep-alive sockets close after about 6 s |
 | lodash package | None, and the version is unpinned | Must be resolvable at startup, or the process exits with code 1 |
 | Node.js runtime | None, and the version is unpinned | Behaviour confirmed on v22.23.3 only (AA-02) |
 | Host OS network stack | None | Port 3000 must be free; one instance per host |
@@ -1931,61 +1934,61 @@ The repository defines no SLA for any integration. The right-hand column shows t
 
 ## 5.2 Component Details
 
-Each component below is documented with the same five attributes. Four components are inline code in `server (1).js`. The fifth, the Node.js HTTP layer, is runtime-provided and is included because it carries all protocol behaviour. Runtime values come from Node.js v22.23.3 (AA-02).
+Each component below is documented with the same five attributes. Four components are inline code in `server (1).js`, and each of those statements is preceded by a JSDoc comment: three identical copies on lines 1-3 and a fourth on line 7. The fifth, the Node.js HTTP layer, is runtime-provided and is included because it carries all protocol behaviour. Runtime values come from Node.js v22.23.3 (AA-02).
 
-### 5.2.1 Lodash Import (Line 1)
+### 5.2.1 Lodash Import (Line 5)
 
 | Attribute | Specification |
-|---|---|
-| Purpose and responsibilities | Loads the lodash module into the constant `_`. Nothing reads `_`, so the component's only effect is a hard startup dependency (F-005) |
-| Technologies and frameworks | CommonJS `require`; lodash, MIT licence, no transitive dependencies. The version is whatever copy the host resolves; the current release is 4.18.1 (Section 3.3.2) |
-| Key interfaces and APIs | Exposes none. Consumes Node.js module resolution, which searches `node_modules` folders from the file's directory upward |
+| --- | --- |
+| Purpose and responsibilities | Loads the lodash module into the constant _. Nothing reads _, so the component's only effect is a hard startup dependency (F-005) |
+| Technologies and frameworks | CommonJS require; lodash, MIT licence, no transitive dependencies. The version is whatever copy the host resolves; the current release is 4.18.1 (Section 3.3.2) |
+| Key interfaces and APIs | Exposes none. Consumes Node.js module resolution, which searches node_modules folders from the file's directory upward |
 | Data persistence requirements | None. The module object lives in the CommonJS module cache until the process exits |
 | Scaling considerations | Loaded once per process, synchronously. Every host or image must supply lodash, or startup fails with exit code 1 (E-01) |
 
 ```javascript
-const _ = require('lodash');   // line 1, binding never referenced
+const _ = require('lodash');   // line 5, binding never referenced
 ```
 
-### 5.2.2 HTTP Server Factory (Line 3)
+### 5.2.2 HTTP Server Factory (Line 8)
 
 | Attribute | Specification |
-|---|---|
-| Purpose and responsibilities | Builds the one `http.Server` instance and registers the inline arrow function as its `'request'` listener |
-| Technologies and frameworks | Node.js built-in `http` module, `createServer(requestListener)` with no options object. No web framework |
-| Key interfaces and APIs | The returned instance goes straight to `.listen(...)` and is never assigned. No other code can reach it |
+| --- | --- |
+| Purpose and responsibilities | Builds the one http.Server instance and registers the inline arrow function as its 'request' listener |
+| Technologies and frameworks | Node.js built-in http module, createServer(requestListener) with no options object. No web framework |
+| Key interfaces and APIs | The returned instance goes straight to .listen(...) and is never assigned. No other code can reach it |
 | Data persistence requirements | None |
-| Scaling considerations | One server per process. Without a reference, nothing can add listeners, tune limits or call `close()` (C-004). The `cluster` module and worker threads are not used |
+| Scaling considerations | One server per process. Without a reference, nothing can add listeners, tune limits or call close() (C-004). The cluster module and worker threads are not used |
 
 Because no options are passed, these Node.js defaults apply to the instance:
 
 | Setting | Default Value | Effect |
-|---|---|---|
-| `maxHeaderSize` | 16,384 bytes | Larger request headers get `431` (D4) |
-| `headersTimeout` | 60,000 ms | Late headers get `408`. The connection checker runs every 30,000 ms, so enforcement falls 60–90 s after the connection opens (D5) |
-| `requestTimeout` | 300,000 ms | Upper bound on receiving a whole request |
-| `keepAliveTimeout` | 5,000 ms | Advertised as `Keep-Alive: timeout=5`. Idle sockets were observed closing at about 6 s (D7) |
-| `timeout` / `maxRequestsPerSocket` | 0 / 0 | No socket inactivity timeout, and no limit on requests per connection |
+| --- | --- | --- |
+| maxHeaderSize | 16,384 bytes | Larger request headers get 431 (D4) |
+| headersTimeout | 60,000 ms | Late headers get 408. The connection checker runs every 30,000 ms, so enforcement falls 60–90 s after the connection opens (D5) |
+| requestTimeout | 300,000 ms | Upper bound on receiving a whole request |
+| keepAliveTimeout | 5,000 ms | Advertised as Keep-Alive: timeout=5. Idle sockets were observed closing at about 6 s (D7) |
+| timeout / maxRequestsPerSocket | 0 / 0 | No socket inactivity timeout, and no limit on requests per connection |
 
-### 5.2.3 Request Handler (Lines 3–4)
+### 5.2.3 Request Handler (Lines 8–9)
 
 | Attribute | Specification |
-|---|---|
-| Purpose and responsibilities | Answers every dispatched request with the fixed body `Hello, World!\n`, whatever the method, path, query, headers or body (F-002) |
-| Technologies and frameworks | Anonymous arrow function `(req, res) => { res.end('Hello, World!\n'); }`, using only the `ServerResponse` API |
-| Key interfaces and APIs | Input: `req` (`http.IncomingMessage`, never read) and `res` (`http.ServerResponse`). Output: `200 OK` with `Content-Length: 14` and no `Content-Type`. `HEAD` gets headers only (Section 4.1.2) |
+| --- | --- |
+| Purpose and responsibilities | Answers every dispatched request with the fixed body Hello, World!\n, whatever the method, path, query, headers or body (F-002) |
+| Technologies and frameworks | Anonymous arrow function (req, res) => { res.end('Hello, World!\n'); }, using only the ServerResponse API |
+| Key interfaces and APIs | Input: req (http.IncomingMessage, never read) and res (http.ServerResponse). Output: 200 OK with Content-Length: 14 and no Content-Type. HEAD gets headers only (Section 4.1.2) |
 | Data persistence requirements | None. There is no shared mutable state, session or I/O |
-| Scaling considerations | Constant CPU cost per request and no I/O. Being stateless, it can be replicated horizontally with no coordination. The single event loop is the throughput ceiling: in the verification environment, 20,000 keep-alive requests over 50 concurrent sockets from the same host finished in 770 ms (about 26,000 requests/s), every one `200 OK` with the exact body |
+| Scaling considerations | Constant CPU cost per request and no I/O. Being stateless, it can be replicated horizontally with no coordination. The single event loop is the throughput ceiling: in the verification environment, 20,000 keep-alive requests over 50 concurrent sockets from the same host finished in 770 ms (about 26,000 requests/s), every one 200 OK with the exact body |
 
-### 5.2.4 Listener and Startup Callback (Line 5)
+### 5.2.4 Listener and Startup Callback (Line 10)
 
 | Attribute | Specification |
-|---|---|
-| Purpose and responsibilities | Binds the server to TCP port 3000. When the `'listening'` event fires, writes the readiness line (F-003, F-004) |
-| Technologies and frameworks | `server.listen(port, callback)` with no host argument, so Node.js binds the wildcard `::`. Output goes through `console.log` |
-| Key interfaces and APIs | Network: `::` port 3000 (reachable over IPv4 at `127.0.0.1`). Console: `Server running at http://127.0.0.1:3000/` |
+| --- | --- |
+| Purpose and responsibilities | Binds the server to TCP port 3000. When the 'listening' event fires, writes the readiness line (F-003, F-004) |
+| Technologies and frameworks | server.listen(port, callback) with no host argument, so Node.js binds the wildcard ::. Output goes through console.log |
+| Key interfaces and APIs | Network: :: port 3000 (reachable over IPv4 at 127.0.0.1). Console: Server running at http://127.0.0.1:3000/ |
 | Data persistence requirements | None. The log line persists only if the parent shell or a supervisor captures stdout |
-| Scaling considerations | Because the port is a literal, each host or network namespace runs one instance. More instances need separate hosts or containers with port mapping (AA-05). A second instance on the same host crashes with `EADDRINUSE :::3000` and leaves the first running (E-02) |
+| Scaling considerations | Because the port is a literal, each host or network namespace runs one instance. More instances need separate hosts or containers with port mapping (AA-05). A second instance on the same host crashes with EADDRINUSE :::3000 and leaves the first running (E-02) |
 
 ```javascript
 }).listen(3000, () => console.log('Server running at http://127.0.0.1:3000/'));
@@ -1994,10 +1997,10 @@ Because no options are passed, these Node.js defaults apply to the instance:
 ### 5.2.5 Node.js HTTP Layer (Runtime-Provided)
 
 | Attribute | Specification |
-|---|---|
+| --- | --- |
 | Purpose and responsibilities | Accepts connections, parses requests, enforces size and time limits, rejects bad input, writes the default status and headers, and manages keep-alive. None of this is in the repository |
 | Technologies and frameworks | Node.js v22.23.3 with the llhttp 9.4.3 HTTP parser, libuv 1.51.0 event loop and V8 12.4. The repository pins no version (C-003) |
-| Key interfaces and APIs | Emits `'request'` and `'listening'`, which the code handles, and `'error'` and `'clientError'`, which it does not. `clientError` falls back to the built-in `400`/`431`/`408` replies, and an unhandled `'error'` becomes an uncaught exception (Section 4.1.2) |
+| Key interfaces and APIs | Emits 'request' and 'listening', which the code handles, and 'error' and 'clientError', which it does not. clientError falls back to the built-in 400/431/408 replies, and an unhandled 'error' becomes an uncaught exception (Section 4.1.2) |
 | Data persistence requirements | None. Connection state is held in memory per socket |
 | Scaling considerations | JavaScript runs on one thread. The process had 7 OS threads in total, the others being Node.js and V8 helper threads. Resident memory was about 47 MB idle and peaked at about 61 MB during the 20,000-request run (verification environment only) |
 
@@ -2015,10 +2018,10 @@ flowchart LR
         Parent["Parent process<br/>or supervisor"]
     end
     subgraph Proc["Node.js process running server (1).js"]
-        LI["Lodash Import<br/>line 1"]
-        SF["HTTP Server Factory<br/>line 3"]
-        RH["Request Handler<br/>lines 3-4"]
-        LS["Listener and Startup Callback<br/>line 5"]
+        LI["Lodash Import<br/>line 5"]
+        SF["HTTP Server Factory<br/>line 8"]
+        RH["Request Handler<br/>lines 8-9"]
+        LS["Listener and Startup Callback<br/>line 10"]
         Sig["Default signal handling<br/>no handlers in code"]
         subgraph RT["Node.js HTTP Layer (runtime)"]
             Parser["llhttp parser<br/>limits and timeouts"]
@@ -2089,7 +2092,7 @@ sequenceDiagram
     participant Http as http built-in
     participant OS as Host TCP stack
     Op->>Proc: node "server (1).js"
-    Proc->>Loader: require('lodash') at line 1
+    Proc->>Loader: require('lodash') at line 5
     Loader->>FS: Resolve lodash upward from the file directory
     alt lodash not found
         FS-->>Loader: Not found
@@ -2097,9 +2100,9 @@ sequenceDiagram
     else lodash found
         FS-->>Loader: Module object
         Loader-->>Proc: Bound to _ and never read
-        Proc->>Http: createServer(handler) at line 3
+        Proc->>Http: createServer(handler) at line 8
         Http-->>Proc: http.Server, not assigned to a variable
-        Proc->>OS: listen(3000) with no host at line 5
+        Proc->>OS: listen(3000) with no host at line 10
         alt port 3000 in use
             OS-->>Proc: error event EADDRINUSE :::3000
             Proc-->>Op: Uncaught, stderr stack trace, exit 1
@@ -2141,28 +2144,28 @@ sequenceDiagram
 
 ## 5.3 Technical Decisions
 
-The repository contains no decision records, design notes or code comments (AA-01). The decisions below are reconstructed from what `server (1).js` does at commit `f0ba73b`. Each is labelled **implicit**: the code embodies it, but nothing records that it was deliberately chosen. Rationale is inferred from the code's minimal "Hello, World" purpose (Section 1.2.1). Tradeoffs and consequences are observed.
+The repository contains no decision records or design notes, and the four JSDoc comments now in the file (lines 1-3 and line 7) record no rationale (AA-01). The decisions below are reconstructed from what `server (1).js` does in the `0610_02` state at `93f60af`. Each is labelled **implicit**: the code embodies it, but nothing records that it was deliberately chosen. Rationale is inferred from the code's minimal "Hello, World" purpose (Section 1.2.1). Tradeoffs and consequences are observed.
 
 ### 5.3.1 Architecture Style Decisions and Tradeoffs
 
 | Decision | As Built | Benefit | Tradeoff |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Program structure | One file with two anonymous inline callbacks; no classes, named functions or exports | No build step. The whole system can be read at once | No module boundaries or test seams; nothing can import and test the handler (C-006) |
-| Framework | Node.js built-in `http` only | No framework dependency or framework overhead | No routing, middleware, body parsing or central error handling |
+| Framework | Node.js built-in http only | No framework dependency or framework overhead | No routing, middleware, body parsing or central error handling |
 | Concurrency model | One process on one event loop | No coordination, locking or shared state to manage | Uses one CPU core. A crash or a blocked loop stops all service. No in-process redundancy |
-| Server lifecycle | `createServer(...).listen(...)` chained; the instance is never assigned | Minimal code | No graceful shutdown, runtime reconfiguration or extra listeners (C-004) |
-| Configuration | Port, body and log text are literals | Deterministic; no configuration parsing | Changing the port means editing code. The port in the log message and the `listen` argument must be kept in step by hand (Section 2.4.4) |
-| Dependency management | `lodash` is required, with no manifest | None. The binding is never used | Startup fails on clean hosts; the version loaded is unknown (C-002) |
+| Server lifecycle | createServer(...).listen(...) chained; the instance is never assigned | Minimal code | No graceful shutdown, runtime reconfiguration or extra listeners (C-004) |
+| Configuration | Port, body and log text are literals | Deterministic; no configuration parsing | Changing the port means editing code. The port in the log message and the listen argument must be kept in step by hand (Section 2.4.4) |
+| Dependency management | lodash is required, with no manifest | None. The binding is never used | Startup fails on clean hosts; the version loaded is unknown (C-002) |
 
 The style fits a fixed-response demonstration server. It does not fit anything that needs routing, configuration, observability or controlled shutdown. Each of those would need structural changes, not just additions.
 
 ### 5.3.2 Communication Pattern Choices
 
 | Concern | Choice | Inferred Rationale | Implication |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Client protocol | HTTP/1.1 over plaintext TCP | Built into Node.js and universally supported | Traffic is neither encrypted nor integrity-protected (Section 5.3.5) |
 | Exchange style | Synchronous request–response | A fixed response needs nothing more | No streaming, push or asynchronous processing |
-| Connection management | Node.js keep-alive defaults (`Keep-Alive: timeout=5`) | Connection reuse comes free | Idle sockets stay open about 6 s; there is no per-socket request limit |
+| Connection management | Node.js keep-alive defaults (Keep-Alive: timeout=5) | Connection reuse comes free | Idle sockets stay open about 6 s; there is no per-socket request limit |
 | Internal communication | Direct in-process event callbacks | One process needs no IPC | No queues, brokers or service-to-service calls |
 | Operational signalling | One stdout line plus the exit code | The simplest possible readiness signal | Unstructured. The logged URL does not match the real bind address (AA-04) |
 
@@ -2173,9 +2176,9 @@ The code uses none of these: HTTP/2, HTTPS, WebSockets, gRPC, message queues, ev
 The system has no storage, by construction. The response body is a string literal fixed when the code was written, so there is nothing to read, write or look up at runtime.
 
 | Data Category | Storage | Rationale and Consequence |
-|---|---|---|
-| Response content | String literal on line 4 | Constant, so no data source is needed. Changing it means editing code and restarting |
-| Request data | Not stored, not read | The handler ignores `req`, so nothing is retained |
+| --- | --- | --- |
+| Response content | String literal on line 9 | Constant, so no data source is needed. Changing it means editing code and restarting |
+| Request data | Not stored, not read | The handler ignores req, so nothing is retained |
 | Session or user data | None | No users or sessions exist |
 | Logs | Not stored by the process | stdout and stderr persist only if captured externally (Section 4.3.1) |
 
@@ -2184,11 +2187,11 @@ With no data, there are no database drivers, schemas, migrations or backups. Eve
 ### 5.3.4 Caching Strategy Justification
 
 | Layer | Strategy | Justification |
-|---|---|---|
+| --- | --- | --- |
 | Application cache | None | The body is a constant, so there is nothing expensive to compute or fetch |
-| HTTP caching | No `Cache-Control`, `ETag`, `Last-Modified` or `Expires` headers | No decision is recorded. Caching is left to whatever clients and intermediaries do by default |
+| HTTP caching | No Cache-Control, ETag, Last-Modified or Expires headers | No decision is recorded. Caching is left to whatever clients and intermediaries do by default |
 | Shared or distributed cache | None | With no state, there is nothing to share between instances |
-| Module cache | Node.js CommonJS cache holds `lodash` and `http` | Runtime behaviour, not application logic. Each module loads once per process (Section 4.3.1) |
+| Module cache | Node.js CommonJS cache holds lodash and http | Runtime behaviour, not application logic. Each module loads once per process (Section 4.3.1) |
 
 Adding a cache would buy nothing. Serving the response already takes one `res.end` call on a constant, with no I/O.
 
@@ -2197,14 +2200,14 @@ Adding a cache would buy nothing. Serving the response already takes one `res.en
 The code selects no security mechanism. The protections that exist come from Node.js defaults and from whatever the host environment adds (AA-05).
 
 | Concern | Mechanism in Place | Source | Residual Exposure |
-|---|---|---|---|
-| Transport security | None: the `http` module, not `https` | Line 3 | Requests and responses cross the network in cleartext |
-| Authentication and authorization | None | Lines 3–4 | Anyone who can reach port 3000 gets a response (Section 5.4.4) |
-| Network exposure | Bind to `::`, all interfaces | Line 5 | Only host firewalls and network policy limit reachability (AA-04) |
-| Input handling | Application never reads input. Node.js parser rejects malformed requests (`400`) and headers over 16,384 bytes (`431`) | Line 4; Node.js defaults | Smallest possible application input surface |
-| Slow-client protection | `headersTimeout` 60 s and `requestTimeout` 300 s | Node.js defaults | No rate limiting, connection cap or request-per-socket limit |
-| Response hardening | Default headers only: no `Content-Type`, no security headers | Line 4 | Clients must guess the media type |
-| Supply chain | None: lodash is unpinned, with no lockfile or integrity hash | Line 1; Section 3.3.4 | A copy in the advisory range (≤ 4.17.23) would load silently. No code path calls the affected functions |
+| --- | --- | --- | --- |
+| Transport security | None: the http module, not https | Line 8 | Requests and responses cross the network in cleartext |
+| Authentication and authorization | None | Lines 8–9 | Anyone who can reach port 3000 gets a response (Section 5.4.4) |
+| Network exposure | Bind to ::, all interfaces | Line 10 | Only host firewalls and network policy limit reachability (AA-04) |
+| Input handling | Application never reads input. Node.js parser rejects malformed requests (400) and headers over 16,384 bytes (431) | Line 9; Node.js defaults | Smallest possible application input surface |
+| Slow-client protection | headersTimeout 60 s and requestTimeout 300 s | Node.js defaults | No rate limiting, connection cap or request-per-socket limit |
+| Response hardening | Default headers only: no Content-Type, no security headers | Line 9 | Clients must guess the media type |
+| Supply chain | None: lodash is unpinned, with no lockfile or integrity hash | Line 5; Section 3.3.4 | A copy in the advisory range (≤ 4.17.23) would load silently. No code path calls the affected functions |
 
 ### 5.3.6 Decision Tree
 
@@ -2237,24 +2240,24 @@ flowchart TD
 
 ### 5.3.7 Architecture Decision Records
 
-Every record has the status **Implicit, as built at `f0ba73b`**. None was written by the authors; each is reconstructed from the code.
+Every record has the status **Implicit, as built in the** `0610_02` **state at** `93f60af`. None was written by the authors; each is reconstructed from the code.
 
 | ADR | Decision | Context | Consequences |
-|---|---|---|---|
-| ADR-001 | Single-file script with inline anonymous callbacks | A fixed-response server needs very little code (lines 1–5) | Easy to read and run. No test seams or reuse; file name must be quoted to run (C-005) |
-| ADR-002 | Node.js built-in `http`, no framework | No routes or middleware are needed | One fewer dependency. All protocol behaviour comes from the unpinned runtime (C-003) |
+| --- | --- | --- | --- |
+| ADR-001 | Single-file script with inline anonymous callbacks | A fixed-response server needs very little code (lines 5–10) | Easy to read and run. No test seams or reuse; file name must be quoted to run (C-005) |
+| ADR-002 | Node.js built-in http, no framework | No routes or middleware are needed | One fewer dependency. All protocol behaviour comes from the unpinned runtime (C-003) |
 | ADR-003 | Single process on one event loop | The handler does constant, I/O-free work | One core per instance. The process is a single point of failure (C-004) |
 | ADR-004 | Stateless constant response; no storage or caching | The body is a literal | No data to lose or sync, and replicas need no coordination |
-| ADR-005 | Port `3000` as a literal, with no host argument | No configuration mechanism exists | Binds `::` on all interfaces. One instance per host; a port conflict crashes the process (C-001, E-02) |
+| ADR-005 | Port 3000 as a literal, with no host argument | No configuration mechanism exists | Binds :: on all interfaces. One instance per host; a port conflict crashes the process (C-001, E-02) |
 | ADR-006 | Fail fast; leave runtime defaults in place for errors, timeouts and signals | No error handling in the code | Startup errors exit 1 with a stack trace. Signals end the process without draining connections (E-01, E-02, E-07) |
 | ADR-007 | Plain HTTP with no authentication | Demonstration scope; nothing to protect in the response | Cleartext and open access. Security depends on the host network (AA-05) |
-| ADR-008 | `require('lodash')` with no manifest | None evident; `_` is never used | Startup dependency with no function. Unpinned version and unverified supply chain (C-002, E-01) |
+| ADR-008 | require('lodash') with no manifest | None evident; _ is never used | Startup dependency with no function. Unpinned version and unverified supply chain (C-002, E-01) |
 
 The diagram ties each ADR to the constraints (Section 2.6.2), error paths (Section 4.3.2) and assumptions it produces.
 
 ```mermaid
 flowchart LR
-    subgraph Decisions["Implicit architecture decisions at f0ba73b"]
+    subgraph Decisions["Implicit architecture decisions at 93f60af"]
         ADR1["ADR-001<br/>Single-file script"]
         ADR2["ADR-002<br/>Built-in http, no framework"]
         ADR3["ADR-003<br/>Single process, one event loop"]
@@ -2300,10 +2303,10 @@ The code implements none of the usual cross-cutting capabilities: no observabili
 The process exposes no metrics, health endpoint, readiness endpoint or instrumentation (Section 1.2.3). Monitoring has to rely on the few signals it produces as side effects.
 
 | Signal | Produced By | Availability | Monitoring Use |
-|---|---|---|---|
-| Readiness line on stdout | Listener and Startup Callback (line 5) | Once per successful start | Confirms the bind succeeded |
-| `200 OK` on any method and path | Request Handler (line 4) | Every dispatched request | External liveness probe. Any path works; no dedicated health route exists |
-| Process exit code | Node.js runtime | At termination: `1`, `130` or `143` | Lets a supervisor detect a crash or stop |
+| --- | --- | --- | --- |
+| Readiness line on stdout | Listener and Startup Callback (line 10) | Once per successful start | Confirms the bind succeeded |
+| 200 OK on any method and path | Request Handler (line 9) | Every dispatched request | External liveness probe. Any path works; no dedicated health route exists |
+| Process exit code | Node.js runtime | At termination: 1, 130 or 143 | Lets a supervisor detect a crash or stop |
 | Stack trace on stderr | Node.js runtime | Fatal startup errors only (E-01, E-02) | Diagnosis by the operator |
 | CPU, memory, socket counts | Host OS only | Through external tooling | Capacity monitoring. Resident memory was about 47 MB idle and about 61 MB under load |
 | Application metrics, tracing, alerts | None | — | — |
@@ -2313,11 +2316,11 @@ Because there is no dedicated health route, a probe of `/` cannot tell a healthy
 ### 5.4.2 Logging and Tracing Strategy
 
 | Log Event | Destination | Format | Status |
-|---|---|---|---|
-| Startup readiness | stdout | Plain-text literal: `Server running at http://127.0.0.1:3000/` | Present. The URL text does not match the `::` bind (AA-04) |
+| --- | --- | --- | --- |
+| Startup readiness | stdout | Plain-text literal: Server running at http://127.0.0.1:3000/ | Present. The URL text does not match the :: bind (AA-04) |
 | Fatal startup error | stderr | Node.js default stack trace | Present, from the runtime |
 | Request access log | — | — | Absent. Requests leave no server-side trace (F-004-RQ-003) |
-| Protocol rejections (`400`, `431`, `408`) | — | — | Absent. Only the affected client sees them |
+| Protocol rejections (400, 431, 408) | — | — | Absent. Only the affected client sees them |
 | Shutdown | — | — | Absent. Signals end the process silently |
 
 - **Format:** unstructured text, with no log levels, timestamps, instance identifiers or correlation IDs. Output from several instances cannot be told apart (Section 2.4.4).
@@ -2329,11 +2332,11 @@ Because there is no dedicated health route, a probe of `/` cannot tell a healthy
 The code has no error-handling statements. Errors are handled by four default patterns, each owned by the Node.js runtime. The full catalogue (E-01 to E-08) and recovery procedures are in Section 4.3.2.
 
 | Pattern | Where It Applies | Behaviour | Errors |
-|---|---|---|---|
-| Fail fast through an uncaught exception | Startup: line 1 (`require`) and line 5 (`listen`) | Stack trace on stderr, exit code 1, no socket left serving | E-01, E-02 |
-| Runtime-delegated rejection | Node.js HTTP parser and connection checker | Default `clientError` handling sends `400`, `431` or `408`, then closes the socket. Other connections are unaffected | E-03, E-04, E-05 |
+| --- | --- | --- | --- |
+| Fail fast through an uncaught exception | Startup: line 5 (require) and line 10 (listen) | Stack trace on stderr, exit code 1, no socket left serving | E-01, E-02 |
+| Runtime-delegated rejection | Node.js HTTP parser and connection checker | Default clientError handling sends 400, 431 or 408, then closes the socket. Other connections are unaffected | E-03, E-04, E-05 |
 | Silent discard | Client socket close | The socket is dropped and the server keeps serving | E-06 |
-| Default signal termination | SIGINT and SIGTERM | Immediate exit (`130` or `143`); open connections are dropped without draining | E-07 |
+| Default signal termination | SIGINT and SIGTERM | Immediate exit (130 or 143); open connections are dropped without draining | E-07 |
 
 Patterns that are absent: retry with backoff, fallback responses, circuit breakers, an `'error'` listener on the server, `process.on('uncaughtException')`, and graceful shutdown. The Request Handler is infallible: one `res.end` on a constant, with no I/O. So no error can arise once a request has been dispatched.
 
@@ -2342,8 +2345,8 @@ Patterns that are absent: retry with backoff, fallback responses, circuit breake
 ```mermaid
 flowchart TD
     Start(["Error or abnormal event"]) --> Origin{"Where does it arise?"}
-    Origin -- "Startup, line 1" --> E01["E-01 Cannot find module lodash"]
-    Origin -- "Startup, line 5" --> E02["E-02 listen EADDRINUSE :::3000"]
+    Origin -- "Startup, line 5" --> E01["E-01 Cannot find module lodash"]
+    Origin -- "Startup, line 10" --> E02["E-02 listen EADDRINUSE :::3000"]
     Origin -- "Request parsing" --> Parse{"Parser condition"}
     Origin -- "Client socket" --> E06["E-06 Client aborts mid-request"]
     Origin -- "Operating system" --> E07["E-07 SIGINT or SIGTERM"]
@@ -2376,11 +2379,11 @@ flowchart TD
 There is none. Every client that can reach `::` port 3000 is anonymous and gets the same response.
 
 | Layer | Mechanism | Status |
-|---|---|---|
-| Identity and credentials | None. No tokens, keys, cookies or `Authorization` header handling | Absent (lines 3–4) |
+| --- | --- | --- |
+| Identity and credentials | None. No tokens, keys, cookies or Authorization header handling | Absent (lines 8–9) |
 | Authorization and roles | None. No per-path or per-method access rules | Absent |
 | Session management | None | Absent; the handler is stateless |
-| Transport security | None. Plain `http`, no TLS | Absent (line 3) |
+| Transport security | None. Plain http, no TLS | Absent (line 8) |
 | Network-level access control | Not in the repository | Delegated to host firewalls and network policy (AA-05) |
 
 Impact is limited by what the response contains: a fixed 14-byte greeting with no data. The observed response headers (`Date`, `Connection`, `Keep-Alive`, `Content-Length`) include no `Server` header, so no runtime version is disclosed. Open access does mean any reachable client can use connection slots and event-loop time without limit (Section 5.3.5).
@@ -2390,11 +2393,11 @@ Impact is limited by what the response contains: a fixed 14-byte greeting with n
 The repository defines no performance requirements, SLAs or SLOs. The values below are observed baselines.
 
 | Metric | Observed Value | Conditions |
-|---|---|---|
-| Startup to first successful response | About 39 ms | Process launch to first `200 OK`, lodash present |
-| Request latency | 0.06 ms to connect, 0.40 ms in total | One `curl` over loopback |
-| Throughput | About 26,000 requests/s: 20,000 requests in 770 ms, all `200 OK` | 50 concurrent keep-alive sockets; client on the same host |
-| Burst concurrency | 200 simultaneous requests, all `200 OK` | Separate `curl` processes |
+| --- | --- | --- |
+| Startup to first successful response | About 39 ms | Process launch to first 200 OK, lodash present |
+| Request latency | 0.06 ms to connect, 0.40 ms in total | One curl over loopback |
+| Throughput | About 26,000 requests/s: 20,000 requests in 770 ms, all 200 OK | 50 concurrent keep-alive sockets; client on the same host |
+| Burst concurrency | 200 simultaneous requests, all 200 OK | Separate curl processes |
 | Resident memory | About 47 MB idle; peak about 61 MB | Before and after the 20,000-request run |
 | Protocol time limits | Headers within 60 s, enforced 60–90 s after the connection opens; request within 300 s; keep-alive idle about 6 s | Node.js defaults (Section 5.2.2) |
 
@@ -2409,25 +2412,25 @@ The repository defines no performance requirements, SLAs or SLOs. The values bel
 The system holds no data, so disaster recovery means restoring the service only.
 
 | DR Attribute | Position |
-|---|---|
-| Recoverable assets | Source only: `server (1).js` at commit `f0ba73b`, on branches `main` and `0610_02` and on the `origin` remote |
+| --- | --- |
+| Recoverable assets | Source only: `server (1).js` (ten lines) and `README.md` on `0610_02` at `93f60af`, mirrored on `origin/0610_02`; `main` and `origin/main` still hold the original `server (1).js` from `f0ba73b` |
 | Recovery point objective (RPO) | Not applicable. No data is created or stored |
 | Recovery time objective (RTO) | Not defined. Technical restart takes about 39 ms, but there is no supervisor, so real recovery time is however long an operator takes to respond |
 | Redundancy | None. One process on one host is a single point of failure |
 | Backups | Not needed beyond the Git remote; no runtime state exists |
 
 | Failure Scenario | Impact | Recovery Procedure |
-|---|---|---|
-| Process crash or termination (E-07) | All clients get connection refused (E-08) | Relaunch with `node "server (1).js"`, then verify |
-| Port 3000 taken by another process (E-02) | The new instance exits with code 1 | Stop the conflicting process, or change the port literal and the log text on line 5 together, then relaunch |
-| Host lost or rebuilt | Service unavailable; there is no replica | Provision Node.js, check out `f0ba73b`, provide lodash or delete line 1, launch, verify |
-| lodash missing on a new host (E-01) | Exit code 1 at startup | Install lodash (`^4.18.1`, Section 3.3.3) or delete the unused line 1 |
+| --- | --- | --- |
+| Process crash or termination (E-07) | All clients get connection refused (E-08) | Relaunch with node "server (1).js", then verify |
+| Port 3000 taken by another process (E-02) | The new instance exits with code 1 | Stop the conflicting process, or change the port literal and the log text on line 10 together, then relaunch |
+| Host lost or rebuilt | Service unavailable; there is no replica | Provision Node.js, check out `0610_02` at `93f60af` (or `main` at `f0ba73b`), provide lodash or delete line 5, launch, verify |
+| lodash missing on a new host (E-01) | Exit code 1 at startup | Install lodash (^4.18.1, Section 3.3.3) or delete the unused line 5 |
 | Different Node.js version on a new host | Defaults may differ from those documented here (AA-02) | Recheck response headers and timeouts against Section 5.2.2 |
 
 Host rebuild and verification sequence:
 
 ```bash
-git checkout f0ba73b && npm install lodash@^4.18.1   # or delete line 1 of the script
+git checkout 93f60af && npm install lodash@^4.18.1   # or delete line 5 of the script
 node "server (1).js"                                 # wait for the readiness line
 curl -i http://127.0.0.1:3000/                       # expect 200 OK, Content-Length: 14
 ```
@@ -2436,8 +2439,10 @@ curl -i http://127.0.0.1:3000/                       # expect 200 OK, Content-Le
 
 #### Repository Files and Folders
 
-- `server (1).js` - The entire system: the Lodash Import (line 1), HTTP Server Factory (line 3), Request Handler (lines 3–4) and Listener and Startup Callback (line 5). Source of every component, interface, data flow and decision documented here
-- `/` (repository root) - Holds only `server (1).js`: no manifest, lockfile, configuration, tests, CI, container or infrastructure files. Basis for ADR-001, ADR-008 and constraints C-001 to C-006. Branches `main` and `0610_02` both sit at the single commit `f0ba73b`
+- `server (1).js` - The entire system: the Lodash Import (line 5), HTTP Server Factory (line 8), Request Handler (lines 8–9) and Listener and Startup Callback (line 10), each preceded by a JSDoc comment (lines 1-3 and line 7) that adds no behaviour. Source of every component, interface, data flow and decision documented here
+- `README.md` - Project name `some_files_01`, install step `npm install lodash`, run step `node "server (1).js"`. The only in-repo statement of how to install or run the system
+- `blitzy/documentation/Technical Specifications.md` - The tracked copy of this specification, present on `0610_02`
+- `/` (repository root) - Holds `server (1).js`, `README.md` and the `blitzy/` documentation folder: no manifest, lockfile, configuration, tests, CI, container or infrastructure files. Basis for ADR-001, ADR-008 and constraints C-001 to C-006. Nine commits: `main` at `f0ba73b`, `0610_02` and `origin/0610_02` at `93f60af`
 
 #### Technical Specification Sections Cross-Referenced
 
@@ -2464,14 +2469,14 @@ No web sources were used for this section.
 
 **Core Services Architecture is not applicable for this system.**
 
-The system at commit `f0ba73b`, identical on `main` and `0610_02`, is one five-line file, `server (1).js`, run as one Node.js process. It has no microservices, no distributed components and no separately deployable services. Every check that would indicate a services architecture comes back negative:
+The system in the `0610_02` state at `93f60af` is one ten-line, 426-byte file, `server (1).js`, run as one Node.js process. It has no microservices, no distributed components and no separately deployable services. Every check that would indicate a services architecture comes back negative:
 
 | Indicator of a Services Architecture | Observed in Repository | Evidence |
 |---|---|---|
-| More than one deployable service | One script run as one process. Every branch and remote ref contains only `server (1).js` | Repository root; Section 3.6.2 |
-| Calls between services | None. No outbound HTTP (`http.request`, `http.get`, `fetch`) and no client libraries | `server (1).js` lines 1–5; Section 5.3.2 |
-| Distributed or multi-process runtime | None. No `cluster`, `worker_threads` or `child_process` | `server (1).js` lines 1–5; ADR-003 (Section 5.3.7) |
-| Shared or remote state | None. The handler returns a constant and stores nothing | Line 4; Section 5.3.3 |
+| More than one deployable service | One script run as one process. `main` and `origin/main` contain only `server (1).js`; `0610_02`, `origin/0610_02` and `HEAD` also contain `README.md` and the tracked specification, but no second service | Repository root; Section 3.6.2 |
+| Calls between services | None. No outbound HTTP (`http.request`, `http.get`, `fetch`) and no client libraries | `server (1).js` lines 5–10; Section 5.3.2 |
+| Distributed or multi-process runtime | None. No `cluster`, `worker_threads` or `child_process` | `server (1).js` lines 5–10; ADR-003 (Section 5.3.7) |
+| Shared or remote state | None. The handler returns a constant and stores nothing | Line 9; Section 5.3.3 |
 | Deployment or orchestration descriptors | None. No Dockerfile, Compose, Kubernetes manifests, IaC or service units | Section 3.6.3 |
 | Service registry, API gateway, service mesh or load-balancer configuration | None | Repository root |
 
@@ -2479,7 +2484,7 @@ The system at commit `f0ba73b`, identical on `main` and `0610_02`, is one five-l
 
 The remaining sub-sections give the as-built position for each area this section normally covers (service components, scalability and resilience) so that each question has an evidence-based answer. Where a capability is missing from the code, the text says whether the host environment would have to supply it (assumption AA-05, Section 5.1.1). These sub-sections describe what exists. They do not propose a target design.
 
-**Evidence coverage:** complete. The repository's only file was read in full and run on Node.js v22.23.3. Assumption AA-02 (Section 5.1.1) applies to any other runtime version.
+**Evidence coverage:** complete. The source file was read in full, together with `README.md`, and the script was run on Node.js v22.23.3. Assumption AA-02 (Section 5.1.1) applies to any other runtime version.
 
 ### 6.1.2 Service Components (As-Built Position)
 
@@ -2489,10 +2494,10 @@ There is one boundary: the operating-system process that runs `server (1).js`. E
 
 | Component | Responsibility | Location |
 |---|---|---|
-| Lodash Import | Loads lodash into `_` at startup. The binding is never read | Line 1 |
-| HTTP Server Factory | Creates one `http.Server` with an inline handler and no options | Line 3 |
-| Request Handler | Ends every response with `Hello, World!\n` | Lines 3–4 |
-| Listener and Startup Callback | Binds port 3000 on `::` and prints the readiness line | Line 5 |
+| Lodash Import | Loads lodash into `_` at startup. The binding is never read | Line 5 |
+| HTTP Server Factory | Creates one `http.Server` with an inline handler and no options | Line 8 |
+| Request Handler | Ends every response with `Hello, World!\n` | Lines 8–9 |
+| Listener and Startup Callback | Binds port 3000 on `::` and prints the readiness line | Line 10 |
 | Node.js HTTP Layer | Parses requests, enforces limits and timeouts, writes default headers, manages keep-alive | Node.js runtime, outside the repository |
 
 Everything else sits outside the boundary and belongs to the host environment: HTTP clients, the host TCP stack, the `node_modules` folder that supplies lodash, the console streams, and the parent shell or supervisor (Section 5.1.4).
@@ -2501,12 +2506,12 @@ Everything else sits outside the boundary and belongs to the host environment: H
 
 | Pattern | Status | Evidence | Consequence |
 |---|---|---|---|
-| Inter-service communication | Not present. Components share one process and talk only through the `'request'` and `'listening'` callbacks | Lines 3–5; Section 5.3.2 | No queues, brokers, RPC, gRPC or service-to-service HTTP |
-| Service discovery | Not present. Clients must learn the host and port 3000 some other way | Line 5 | The only advertisement is the stdout line, which names `127.0.0.1`. The real bind is `::`, all interfaces (AA-04) |
-| Load balancing | Not present in the repository. One listening socket on one event loop accepts every connection | Lines 3–5; ADR-003 | Spreading load across instances would need an external load balancer, which the repository does not provide (AA-05) |
-| Circuit breaker | Not applicable. The process has no outbound dependency that could fail | Lines 1–5; Section 5.1.4 | Nothing to trip or isolate |
-| Retry | Not present. A missing lodash (E-01) or an occupied port (E-02) ends startup on the first attempt with exit code 1. There is no backoff | Lines 1 and 5; Section 4.3.2 | Recovery means a manual or external relaunch. Any request retries happen on the client side |
-| Fallback | Not present, and not needed in the handler: it performs one `res.end` on a constant with no I/O, so it cannot fail | Line 4; Section 5.4.3 | No alternative response or degraded mode exists |
+| Inter-service communication | Not present. Components share one process and talk only through the `'request'` and `'listening'` callbacks | Lines 8–10; Section 5.3.2 | No queues, brokers, RPC, gRPC or service-to-service HTTP |
+| Service discovery | Not present. Clients must learn the host and port 3000 some other way | Line 10 | The only advertisement is the stdout line, which names `127.0.0.1`. The real bind is `::`, all interfaces (AA-04) |
+| Load balancing | Not present in the repository. One listening socket on one event loop accepts every connection | Lines 8–10; ADR-003 | Spreading load across instances would need an external load balancer, which the repository does not provide (AA-05) |
+| Circuit breaker | Not applicable. The process has no outbound dependency that could fail | Lines 5–10; Section 5.1.4 | Nothing to trip or isolate |
+| Retry | Not present. A missing lodash (E-01) or an occupied port (E-02) ends startup on the first attempt with exit code 1. There is no backoff | Lines 5 and 10; Section 4.3.2 | Recovery means a manual or external relaunch. Any request retries happen on the client side |
+| Fallback | Not present, and not needed in the handler: it performs one `res.end` on a constant with no I/O, so it cannot fail | Line 9; Section 5.4.3 | No alternative response or degraded mode exists |
 
 #### 6.1.2.3 Service Interaction Diagram
 
@@ -2517,15 +2522,15 @@ flowchart LR
     Client(["HTTP clients<br/>any method, any path"])
     subgraph HostEnv["Host environment, outside the repository"]
         NetStack["Host TCP stack<br/>:: port 3000"]
-        NodeModules[("node_modules<br/>lodash, supplied by hand")]
+        NodeModules(("node_modules<br/>lodash, supplied by hand"))
         Console["stdout and stderr"]
         Parent["Parent shell or supervisor<br/>signals in, exit code out"]
         subgraph Unit["Single deployable unit: one Node.js process running server (1).js"]
-            LodashImport["Lodash Import<br/>line 1, binding never read"]
-            Factory["HTTP Server Factory<br/>line 3"]
+            LodashImport["Lodash Import<br/>line 5, binding never read"]
+            Factory["HTTP Server Factory<br/>line 8"]
             HttpLayer["Node.js HTTP Layer<br/>parser, limits, keep-alive"]
-            Handler["Request Handler<br/>lines 3-4, res.end constant"]
-            Listener["Listener and Startup Callback<br/>line 5"]
+            Handler["Request Handler<br/>lines 8-9, res.end constant"]
+            Listener["Listener and Startup Callback<br/>line 10"]
         end
     end
     NoDown["No downstream services:<br/>no outbound HTTP, database,<br/>broker or cache"]
@@ -2552,10 +2557,10 @@ The repository contains no scalability design. The code does not mention scaling
 
 | Dimension | As Built | Evidence | Limit |
 |---|---|---|---|
-| Vertical: CPU | One JavaScript event-loop thread handles all requests. No `cluster` and no worker threads | Lines 3–5; ADR-003 | Under saturation the process ran at 100% of one core while the other 43 cores did no request work. More cores per host add no capacity |
+| Vertical: CPU | One JavaScript event-loop thread handles all requests. No `cluster` and no worker threads | Lines 8–10; ADR-003 | Under saturation the process ran at 100% of one core while the other 43 cores did no request work. More cores per host add no capacity |
 | Vertical: memory | No heap or memory flags; Node.js defaults apply | Launch command `node "server (1).js"` (Section 3.6.2) | Resident memory was about 47 MB idle and about 75 MB at saturation. Memory is not the constraint |
-| Horizontal: same host | Not possible without editing the code. Port `3000` is a literal, and `listen` is given no `reusePort` option | Line 5; constraint C-001 | A second instance exits with `EADDRINUSE :::3000` and code 1 (E-02). One instance per host or network namespace |
-| Horizontal: across hosts | Possible in principle. The handler is stateless and there is no shared store, so replicas need no coordination | Line 4; ADR-004 | The repository has no container image, IaC, load balancer or replica definition (Section 3.6.3). Anything that runs replicas must come from outside |
+| Horizontal: same host | Not possible without editing the code. Port `3000` is a literal, and `listen` is given no `reusePort` option | Line 10; constraint C-001 | A second instance exits with `EADDRINUSE :::3000` and code 1 (E-02). One instance per host or network namespace |
+| Horizontal: across hosts | Possible in principle. The handler is stateless and there is no shared store, so replicas need no coordination | Line 9; ADR-004 | The repository has no container image, IaC, load balancer or replica definition (Section 3.6.3). Anything that runs replicas must come from outside |
 
 #### 6.1.3.2 Auto-Scaling Triggers and Rules
 
@@ -2582,7 +2587,7 @@ These are Node.js runtime defaults, not choices made in the code. They change if
 
 The code applies no explicit optimisation. Its performance comes from how little it does:
 
-- **Constant response with no I/O.** Each request is one `res.end` on a 14-byte literal, with no computation, storage access or downstream call (line 4).
+- **Constant response with no I/O.** Each request is one `res.end` on a 14-byte literal, with no computation, storage access or downstream call (line 9).
 - **No framework overhead.** Requests go from the Node.js parser straight to the handler, with no routing or middleware (ADR-002).
 - **Connection reuse by default.** Node.js keep-alive (`Keep-Alive: timeout=5`) lets clients send many requests over one socket (Section 5.3.2).
 
@@ -2614,7 +2619,7 @@ The upper part shows the as-built topology and where it limits scaling. The lowe
 
 ```mermaid
 flowchart TB
-    subgraph AsBuilt["As built at f0ba73b: one host, one instance"]
+    subgraph AsBuilt["As built at 93f60af: one host, one instance"]
         Port3000["Literal port 3000 on ::<br/>no host argument, no env variable"]
         subgraph Proc["Node.js process: 7 OS threads"]
             Loop["One JavaScript event-loop thread<br/>runs every request"]
@@ -2649,8 +2654,8 @@ The code implements no resilience patterns. The only protections are Node.js def
 |---|---|---|---|
 | Malformed request, headers over 16,384 bytes, or headers too slow (E-03 to E-05) | Default `clientError` handling replies `400`, `431` or `408` and closes the socket | Node.js HTTP layer | Only that connection is affected. The process keeps serving |
 | Client disconnects mid-request (E-06) | Socket discarded silently | Node.js HTTP layer | Only that connection is affected |
-| Fault inside the Request Handler | None needed: one `res.end` on a constant, no I/O | Application, line 4 | Cannot occur (Section 5.4.3) |
-| lodash missing or port 3000 taken (E-01, E-02) | None: no `try`/`catch` and no `'error'` listener | Application, lines 1 and 5 | Uncaught exception, stack trace on stderr, exit code 1 |
+| Fault inside the Request Handler | None needed: one `res.end` on a constant, no I/O | Application, line 9 | Cannot occur (Section 5.4.3) |
+| lodash missing or port 3000 taken (E-01, E-02) | None: no `try`/`catch` and no `'error'` listener | Application, lines 5 and 10 | Uncaught exception, stack trace on stderr, exit code 1 |
 | SIGINT or SIGTERM (E-07) | None: no signal handlers and no graceful drain | Node.js default | Immediate exit (`130` or `143`); in-flight connections dropped |
 
 The single process is a single point of failure. Faults are contained at connection level only. Nothing contains them at process or host level.
@@ -2660,21 +2665,21 @@ The single process is a single point of failure. Faults are contained at connect
 The system creates and stores no data, so recovery means restarting the service. Recovery point objective (RPO) does not apply. The recovery time objective (RTO) is not defined: a technical restart takes about 39 ms, but no supervisor exists, so actual recovery time depends on the operator. The full failure-scenario table and the host rebuild sequence are in Section 5.4.6. In short:
 
 ```bash
-node "server (1).js"              # lodash must be resolvable, or delete line 1
+node "server (1).js"              # lodash must be resolvable, or delete line 5
 curl -i http://127.0.0.1:3000/    # expect 200 OK, Content-Length: 14
 ```
 
 #### 6.1.4.3 Data Redundancy Approach
 
-At runtime there is no data to make redundant: no database, files, sessions or caches (Section 5.3.3). Logs exist only if the parent process captures stdout and stderr (Section 5.4.2). The only asset worth recovering is the source, `server (1).js` at commit `f0ba73b`. It is held on local branches `main` and `0610_02` and on remote branches `origin/main` and `origin/0610_02`. These copies are the only redundancy, and nothing extra is needed for a stateless system.
+At runtime there is no data to make redundant: no database, files, sessions or caches (Section 5.3.3). Logs exist only if the parent process captures stdout and stderr (Section 5.4.2). The only assets worth recovering are the source, `server (1).js` (ten lines), and `README.md`. They are held on `0610_02` at `93f60af` and mirrored on `origin/0610_02`, while `main` and `origin/main` still hold the original `server (1).js` from `f0ba73b`. These copies are the only redundancy, and nothing extra is needed for a stateless system.
 
 #### 6.1.4.4 Failover Configurations
 
 | Failover Element | Status | Evidence |
 |---|---|---|
-| Replica or standby instance | None. One instance; a second cannot share the host's port (E-02) | Line 5; Section 6.1.3.1 |
+| Replica or standby instance | None. One instance; a second cannot share the host's port (E-02) | Line 10; Section 6.1.3.1 |
 | Process supervisor or automatic restart | None. After SIGTERM the process stayed down, and clients got connection refused (E-08; `curl` exit code 7) | Section 3.6.3; runtime check |
-| Health or readiness endpoint | None. Any path returns `200 OK`, so `GET /` works as a liveness probe. It cannot detect a process that has stopped answering after accepting a connection | Line 4; Section 5.4.1 |
+| Health or readiness endpoint | None. Any path returns `200 OK`, so `GET /` works as a liveness probe. It cannot detect a process that has stopped answering after accepting a connection | Line 9; Section 5.4.1 |
 | Traffic redirection (DNS, load balancer, virtual IP) | None in the repository | Repository root; AA-05 |
 
 Failover can only come from the host environment. If the host adds it, the stateless handler means a restarted or replacement instance answers exactly as the original did (ADR-004).
@@ -2714,8 +2719,10 @@ flowchart TD
 
 **Repository files and folders**
 
-- `server (1).js` - The whole system. Line 1 loads lodash (unused). Lines 3–4 create the single `http.Server` with a constant-response handler. Line 5 binds the literal port 3000 on `::` and logs the readiness line. The file has no `cluster`, `worker_threads`, `child_process`, outbound HTTP, retry, circuit-breaker, error-listener, signal-handler or environment-configuration code. It was also the subject of the runtime checks: load saturation of one core, memory, and no restart after SIGTERM.
-- `` (repository root) - Contains only `server (1).js` on every branch and remote ref (`main`, `0610_02`, `origin/main`, `origin/0610_02`) at the single commit `f0ba73b`. It has no Dockerfile, Compose, Kubernetes, IaC, CI, service-unit, registry, gateway or load-balancer configuration.
+- `server (1).js` - The whole system, ten lines in the `0610_02` state at `93f60af`. Line 5 loads lodash (unused). Lines 8–9 create the single `http.Server` with a constant-response handler. Line 10 binds the literal port 3000 on `::` and logs the readiness line. Four JSDoc comments (lines 1-3 and line 7) precede those statements and add no behavior. The file has no `cluster`, `worker_threads`, `child_process`, outbound HTTP, retry, circuit-breaker, error-listener, signal-handler or environment-configuration code. It was also the subject of the runtime checks: load saturation of one core, memory, and no restart after SIGTERM.
+- `README.md` - Project name, install step and run step; the only in-repo statement of how to start the service.
+- `blitzy/documentation/Technical Specifications.md` - The tracked copy of this specification, present on `0610_02`.
+- \`\` (repository root) - Holds `server (1).js`, `README.md` and the `blitzy/` documentation folder on `0610_02` and `origin/0610_02` at `93f60af`; `main` and `origin/main` at `f0ba73b` hold only `server (1).js`. It has no Dockerfile, Compose, Kubernetes, IaC, CI, service-unit, registry, gateway or load-balancer configuration.
 
 **Technical Specification cross-references**
 
@@ -2737,18 +2744,18 @@ flowchart TD
 
 **Database Design is not applicable to this system.**
 
-The system at commit `f0ba73b`, identical on `main`, `0610_02` and both `origin` branches, is one five-line file, `server (1).js`. It neither uses a database nor persists any data. Every indicator of a data tier is absent:
+The system in the `0610_02` state at `93f60af` is one ten-line, 426-byte file, `server (1).js`. It neither uses a database nor persists any data. Every indicator of a data tier is absent:
 
 | Indicator of a Data Tier | Observed in Repository | Evidence |
 |---|---|---|
-| Database driver, ORM or query builder | None. The only modules loaded are `lodash` (unused) and the built-in `http` | `server (1).js` lines 1 and 3 |
-| Schema, model or migration files | None. The repository holds no file other than `server (1).js` | Repository root, every ref |
-| Connection strings or data-store configuration | None. No `process.env` access, no configuration or `.env` files, no Compose or container definitions | Lines 1–5; Section 3.6.3 |
-| File or object storage | None. No `fs` usage; the process opens no regular data files at runtime | Lines 1–5; runtime check |
-| Cache or session store | None. No in-process collections, no cookies or sessions, no cache client | Lines 1–5; Section 5.3.4 |
-| Mutable application state | None. The only binding is `const _`, which is never read. The handler returns a string literal | Lines 1 and 4; Section 4.3.1 |
+| Database driver, ORM or query builder | None. The only modules loaded are `lodash` (unused) and the built-in `http` | `server (1).js` lines 5 and 8 |
+| Schema, model or migration files | None. Beyond `server (1).js`, `README.md` and the tracked specification, the repository holds no data-definition file of any kind | Repository root, every ref |
+| Connection strings or data-store configuration | None. No `process.env` access, no configuration or `.env` files, no Compose or container definitions | Lines 5–10; Section 3.6.3 |
+| File or object storage | None. No `fs` usage; the process opens no regular data files at runtime | Lines 5–10; runtime check |
+| Cache or session store | None. No in-process collections, no cookies or sessions, no cache client | Lines 5–10; Section 5.3.4 |
+| Mutable application state | None. The only binding is `const _`, which is never read. The handler returns a string literal | Lines 5 and 9; Section 4.3.1 |
 
-**Why it does not apply.** The code is a fixed-response "Hello, World" HTTP server (Section 1.2.1). Its only data is the 14-byte literal `Hello, World!\n` on line 4, fixed when the code was written. The handler never reads the request (`req` is unused), so nothing arrives that could be stored. Section 3.5 and Section 5.3.3 record the same outcome, and ADR-004 (Section 5.3.7) gives the stateless design. With no data to store, there are no entities, schemas, indexes, replicas, migrations or backups to design.
+**Why it does not apply.** The code is a fixed-response "Hello, World" HTTP server (Section 1.2.1). Its only data is the 14-byte literal `Hello, World!\n` on line 9, fixed when the code was written. The handler never reads the request (`req` is unused), so nothing arrives that could be stored. Section 3.5 and Section 5.3.3 record the same outcome, and ADR-004 (Section 5.3.7) gives the stateless design. With no data to store, there are no entities, schemas, indexes, replicas, migrations or backups to design.
 
 **Runtime confirmation.** On Node.js v22.23.3, with lodash replaced by an empty stub, the process was sent `POST /users?id=N` requests with form bodies, then `GET /`. Every response was the fixed literal. The process's file descriptors held one socket, the listener on `::` port 3000 in `LISTEN` state, with no outbound connection and no data file. Nothing was written to disk except the startup line, which went to stdout. The request bodies were not logged.
 
@@ -2762,10 +2769,10 @@ No schema exists: no tables, collections, documents or key spaces. The system ha
 
 | Data Object | Origin | Lifetime | Persisted |
 |---|---|---|---|
-| TCP connection | Node.js accepts it on `::` port 3000 (line 5) | Until the client closes it or it sits idle for about 6 s (keep-alive) | No |
-| HTTP request (`req`) | Node.js HTTP parser | One request. The handler never reads it (lines 3–4) | No |
-| HTTP response (`res`) | Node.js, completed by `res.end` (line 4) | One request | No |
-| Response literal `Hello, World!\n` | Source code, line 4 | The whole process; restored from source on every launch | Source code only |
+| TCP connection | Node.js accepts it on `::` port 3000 (line 10) | Until the client closes it or it sits idle for about 6 s (keep-alive) | No |
+| HTTP request (`req`) | Node.js HTTP parser | One request. The handler never reads it (lines 8–9) | No |
+| HTTP response (`res`) | Node.js, completed by `res.end` (line 9) | One request | No |
+| Response literal `Hello, World!\n` | Source code, line 9 | The whole process; restored from source on every launch | Source code only |
 
 Relationships: one connection carries zero or more requests (zero when Node.js rejects the input with `400`, `431` or `408` before dispatch, per Section 4.3.2). Each dispatched request gets exactly one response. Every response carries the same literal as its body.
 
@@ -2794,7 +2801,7 @@ erDiagram
     }
     RESPONSE_LITERAL {
         string value "Hello, World! plus newline"
-        string location "server (1).js line 4"
+        string location "server (1).js line 9"
         string lifetime "whole process"
     }
 ```
@@ -2807,8 +2814,8 @@ erDiagram
 
 | Constraint | Kind | Enforced By | Evidence |
 |---|---|---|---|
-| Response body is exactly `Hello, World!\n` (14 bytes) | Fixed value | Application (string literal) | Line 4 |
-| Status is `200` and `Content-Length` is `14` on every dispatched request | Fixed value | Node.js defaults; no headers are set in code | Line 4; Section 2.2 (F-002) |
+| Response body is exactly `Hello, World!\n` (14 bytes) | Fixed value | Application (string literal) | Line 9 |
+| Status is `200` and `Content-Length` is `14` on every dispatched request | Fixed value | Node.js defaults; no headers are set in code | Line 9; Section 2.2 (F-002) |
 | Request headers no larger than 16,384 bytes, or `431` | Size limit | Node.js HTTP parser | Section 4.3.2 (E-04) |
 | Well-formed HTTP/1.1 request line and headers, or `400` | Format | Node.js HTTP parser | Section 4.3.2 (E-03) |
 | Headers within 60 s (enforced 60–90 s) and the full request within 300 s, or `408` | Time limit | Node.js connection checker | Section 4.3.2 (E-05) |
@@ -2819,10 +2826,10 @@ The Node.js-enforced rules depend on the unpinned runtime version (constraint C-
 
 | Concern | As Built | Evidence |
 |---|---|---|
-| Partitioning or sharding | Not applicable. No dataset exists to split by range, hash or tenant | Lines 1–5 |
-| Replication | None at runtime: no primary, replica, standby or replication stream. The only replicated asset is the source file, on local branches `main` and `0610_02` and on `origin/main` and `origin/0610_02` | Repository refs; Section 6.1.4.3 |
+| Partitioning or sharding | Not applicable. No dataset exists to split by range, hash or tenant | Lines 5–10 |
+| Replication | None at runtime: no primary, replica, standby or replication stream. The only replicated assets are the source files, `server (1).js` and `README.md`, held on `0610_02` and `origin/0610_02`, with `main` and `origin/main` still holding the earlier `server (1).js` from `f0ba73b` | Repository refs; Section 6.1.4.3 |
 | Backup | No runtime backup, because there is nothing to back up. The Git remote is the only backup of the source, and Section 5.4.6 finds no more is needed | Section 5.4.6 |
-| Instance-to-instance consistency | Guaranteed by construction. Every instance serves the same literal from the same source, so replicas need no synchronisation | Line 4; ADR-004 (Section 5.3.7) |
+| Instance-to-instance consistency | Guaranteed by construction. Every instance serves the same literal from the same source, so replicas need no synchronisation | Line 9; ADR-004 (Section 5.3.7) |
 
 **Replication architecture.** The diagram shows the as-built position. Solid edges exist. Dashed edges and the "Not present" group mark data-tier elements that the repository does not have.
 
@@ -2839,9 +2846,9 @@ flowchart LR
         NoPrimary -.->|"no replication stream"| NoReplica
     end
     Proc -.->|"no connection, no driver"| NoPrimary
-    subgraph SourceCopies["Only replicated asset: source at commit f0ba73b"]
-        LocalMain["Local branch main"]
-        LocalFeat["Local branch 0610_02"]
+    subgraph SourceCopies["Only replicated assets: source at 93f60af and f0ba73b"]
+        LocalMain["Local branch main<br/>server (1).js at f0ba73b"]
+        LocalFeat["Local branch 0610_02<br/>server (1).js and README.md at 93f60af"]
         Remote["origin remote<br/>origin/main, origin/0610_02"]
     end
     LocalMain <-->|"git push and fetch, manual"| Remote
@@ -2853,17 +2860,17 @@ flowchart LR
 
 #### 6.2.3.1 Migration Procedures and Versioning Strategy
 
-There are no database migrations, migration tool, seed data or schema version table. The repository's only versioned artefact is the source code, kept in Git. That history has one commit, `f0ba73b` ("Add files via upload"), and the requirements baseline v1.0 is fixed at that commit (Section 2.6.3).
+There are no database migrations, migration tool, seed data or schema version table. The repository's only versioned artefact is the source code, kept in Git. That history holds nine commits, from `f0ba73b` ("Add files via upload") to `93f60af`, and the requirements baseline v1.0 is fixed at `f0ba73b`, which is still the head of `main` (Section 2.6.3).
 
 The only "data change" possible is editing the response literal, and it works like a code deployment:
 
 | Step | Action | Effect on Data |
 |---|---|---|
-| 1 | Edit the literal on line 4 and commit it | A new source version. No schema or data conversion is needed |
+| 1 | Edit the literal on line 9 and commit it | A new source version. No schema or data conversion is needed |
 | 2 | Stop the running process (SIGINT or SIGTERM) | In-flight connections are dropped (E-07, Section 4.3.2). No state needs saving |
 | 3 | Relaunch with `node "server (1).js"` | Every response carries the new literal. Rolling back means checking out the previous commit and relaunching |
 
-The fixed body sets `Content-Length` automatically, so a new literal needs no other change. If the port changes, the log text on line 5 must change with it (Section 2.4.4).
+The fixed body sets `Content-Length` automatically, so a new literal needs no other change. If the port changes, the log text on line 10 must change with it (Section 2.4.4).
 
 #### 6.2.3.2 Archival Policies
 
@@ -2873,8 +2880,8 @@ None exist, and none are needed. No records build up, so nothing ages out or nee
 
 | Data | Where It Lives | How It Is Retrieved | Lifetime |
 |---|---|---|---|
-| Response literal | Source line 4, then process memory | Used directly as the argument to `res.end`. No query or lookup | Process; reloaded from source on each launch |
-| lodash module | `node_modules`, supplied by the host, then the Node.js module cache | `require('lodash')` once at startup (line 1); the binding is never read | Process |
+| Response literal | Source line 9, then process memory | Used directly as the argument to `res.end`. No query or lookup | Process; reloaded from source on each launch |
+| lodash module | `node_modules`, supplied by the host, then the Node.js module cache | `require('lodash')` once at startup (line 5); the binding is never read | Process |
 | Request data | Node.js parser buffers and the `req` object | Never retrieved by application code | One request |
 | Readiness line | stdout | Read by the operator or a supervisor | External to the process |
 
@@ -2884,10 +2891,10 @@ There is no read path to a store, no write path, and no transaction. Each reques
 
 | Cache Layer | Policy | Evidence |
 |---|---|---|
-| Application or query cache | None. The body is a constant, so there is nothing to compute or fetch | Line 4; Section 5.3.4 |
-| Distributed cache (for example Redis or Memcached) | None. No client library or configuration | Lines 1–5 |
-| HTTP caching | No `Cache-Control`, `ETag`, `Last-Modified` or `Expires` headers. Clients and intermediaries apply their own defaults | Line 4; runtime response headers |
-| Module cache | Node.js loads `lodash` and `http` once per process. This is runtime behaviour, not an application policy | Lines 1 and 3; Section 4.3.1 |
+| Application or query cache | None. The body is a constant, so there is nothing to compute or fetch | Line 9; Section 5.3.4 |
+| Distributed cache (for example Redis or Memcached) | None. No client library or configuration | Lines 5–10 |
+| HTTP caching | No `Cache-Control`, `ETag`, `Last-Modified` or `Expires` headers. Clients and intermediaries apply their own defaults | Line 9; runtime response headers |
+| Module cache | Node.js loads `lodash` and `http` once per process. This is runtime behaviour, not an application policy | Lines 5 and 8; Section 4.3.1 |
 
 Invalidation, TTL and eviction policies do not apply, because the application caches nothing.
 
@@ -2899,12 +2906,12 @@ Request data comes in, is parsed by Node.js, and is released without being read.
 flowchart LR
     Client(["HTTP client"]) -->|"method, path, headers, body"| Parser["Node.js HTTP parser<br/>transient buffers"]
     Parser -->|"400, 431 or 408 on bad input"| Client
-    Parser -->|"'request' event: req, res"| Handler["Request Handler<br/>server (1).js line 4"]
+    Parser -->|"'request' event: req, res"| Handler["Request Handler<br/>server (1).js line 9"]
     Handler -.->|"req never read"| Discard["Request data released<br/>with the request objects"]
     Literal[("String literal<br/>Hello, World!")] -->|"constant, no lookup"| Handler
     Handler -->|"res.end, 14 bytes"| Writer["Node.js response writer<br/>adds Date, Connection,<br/>Keep-Alive, Content-Length"]
     Writer -->|"200 OK"| Client
-    Startup["Listener and Startup Callback<br/>line 5"] -->|"readiness line"| Stdout["stdout"]
+    Startup["Listener and Startup Callback<br/>line 10"] -->|"readiness line"| Stdout["stdout"]
     Stdout -.->|"only if the host redirects it"| ExtLog["External log capture<br/>not in repository"]
     NoStore["No database, file,<br/>cache or session store"]
     Handler ~~~ NoStore
@@ -2918,9 +2925,9 @@ The repository names no regulatory or data-protection framework and contains no 
 
 | Data | Retention by the Application | Governing Factor |
 |---|---|---|
-| Request method, path, headers, body, client address | Held in memory only while Node.js handles the request; never read, copied or logged by the code | Node.js object lifecycle (lines 3–4) |
+| Request method, path, headers, body, client address | Held in memory only while Node.js handles the request; never read, copied or logged by the code | Node.js object lifecycle (lines 8–9) |
 | Idle keep-alive connection | About 6 s after the last response, then closed | Node.js default `keepAliveTimeout` (Section 4.3.1) |
-| Response literal | For as long as the source exists | Git history (`f0ba73b`) |
+| Response literal | For as long as the source exists | Git history (`f0ba73b` adds it; `8fc5d62` and `ea9f159` revise it) |
 | Readiness line and fatal stack traces | Not retained by the process | Whatever the host does with stdout and stderr (Section 5.4.2) |
 
 No retention schedule, purge job or deletion workflow exists, and none is needed: the process retains nothing between requests.
@@ -2933,7 +2940,7 @@ No retention schedule, purge job or deletion workflow exists, and none is needed
 | Recovery point objective (RPO) | Not applicable. A failure loses no data | Section 5.4.6 |
 | Recovery time objective (RTO) | Not defined. A technical restart takes about 39 ms, but no supervisor exists, so recovery waits for an operator | Sections 5.4.5 and 5.4.6 |
 | Fault tolerance | Connection level only. Node.js rejects bad input (`400`, `431`, `408`) and keeps serving. Process-level faults stop the service, and there is no replica | Section 6.1.4.1 |
-| Source protection | Git copies on `main`, `0610_02` and the `origin` remote | Section 6.1.4.3 |
+| Source protection | Git copies of `server (1).js` and `README.md` on `0610_02` and the `origin` remote, with the earlier script on `main` and `origin/main` | Section 6.1.4.3 |
 
 Because the handler is stateless, a restarted or replacement instance behaves exactly like the original (ADR-004).
 
@@ -2942,7 +2949,7 @@ Because the handler is stateless, a restarted or replacement instance behaves ex
 - **Data minimisation, by construction.** The handler never touches `req`. Headers, cookies, query strings, bodies and the client address are never read, logged or stored. In the runtime check, form bodies sent to `/users` did not appear in any output.
 - **No identifiers issued.** The server sets no cookies, session IDs or tracking headers. The only headers it sends are the runtime defaults `Date`, `Connection`, `Keep-Alive` and `Content-Length`.
 - **No data sharing.** The process makes no outbound calls, so nothing is passed to a third party (Section 5.3.2).
-- **No encryption.** None at rest, because nothing is stored. None in transit either: the server uses plain `http` without TLS, so anything a client sends crosses the network in cleartext (line 3; Section 5.3.5). Encrypting traffic would need TLS termination in front of the process, and the repository provides none.
+- **No encryption.** None at rest, because nothing is stored. None in transit either: the server uses plain `http` without TLS, so anything a client sends crosses the network in cleartext (line 8; Section 5.3.5). Encrypting traffic would need TLS termination in front of the process, and the repository provides none.
 
 #### 6.2.4.4 Audit Mechanisms
 
@@ -2950,8 +2957,8 @@ Because the handler is stateless, a restarted or replacement instance behaves ex
 |---|---|---|
 | Request access log | None. Requests leave no server-side trace (F-004-RQ-003) | Absent |
 | Data-change audit trail | Not applicable. Runtime data never changes | Not applicable |
-| Administrative or startup events | One unstructured readiness line on stdout, with no timestamp or instance ID | Present (line 5) |
-| Code-change history | Git: one commit, `f0ba73b` | Present, repository level |
+| Administrative or startup events | One unstructured readiness line on stdout, with no timestamp or instance ID | Present (line 10) |
+| Code-change history | Git: nine commits. The requirement baseline v1.0 is `f0ba73b`; `HEAD` is `93f60af` | Present, repository level |
 
 Any request-level audit would need an external proxy or load balancer that writes access logs. The repository has none (Section 3.6.3).
 
@@ -2959,15 +2966,15 @@ Any request-level audit would need an external proxy or load balancer that write
 
 | Access Layer | Control | Evidence |
 |---|---|---|
-| Database users, roles and grants | Not applicable. No database or credentials exist | Lines 1–5 |
-| Client authentication and authorisation | None. Every client that can reach `::` port 3000 gets the same response | Lines 3–5; Section 5.4.4 |
-| Network reachability | Not set in code. The process binds all interfaces, so host firewalls and network policy are the only limit | Line 5; AA-04 and AA-05 |
-| Filesystem | The process needs read access to `server (1).js` and to lodash in `node_modules`. The runtime check saw no writes, so no write access to storage is needed | Lines 1 and 3; runtime check |
-| Secrets management | Not applicable. No keys, passwords or connection strings exist | Lines 1–5 |
+| Database users, roles and grants | Not applicable. No database or credentials exist | Lines 5–10 |
+| Client authentication and authorisation | None. Every client that can reach `::` port 3000 gets the same response | Lines 8–10; Section 5.4.4 |
+| Network reachability | Not set in code. The process binds all interfaces, so host firewalls and network policy are the only limit | Line 10; AA-04 and AA-05 |
+| Filesystem | The process needs read access to `server (1).js` and to lodash in `node_modules`. The runtime check saw no writes, so no write access to storage is needed | Lines 5 and 8; runtime check |
+| Secrets management | Not applicable. No keys, passwords or connection strings exist | Lines 5–10 |
 
 ### 6.2.5 Performance Optimization (As-Built Position)
 
-The system has no data tier, so data-access cost is zero by construction. Each request is one `res.end` call on a 14-byte constant, with no I/O (line 4). The positions below cover each data-tier technique. The measured figures come from the verification environment (Node.js v22.23.3, load generators on the same host). They are baselines, not SLAs.
+The system has no data tier, so data-access cost is zero by construction. Each request is one `res.end` call on a 14-byte constant, with no I/O (line 9). The positions below cover each data-tier technique. The measured figures come from the verification environment (Node.js v22.23.3, load generators on the same host). They are baselines, not SLAs.
 
 #### 6.2.5.1 Query Optimization Patterns
 
@@ -2981,9 +2988,9 @@ None is applied, and none would help. The response is already a constant held in
 
 | Connection Type | Pooling | Evidence |
 |---|---|---|
-| Database or cache connections | Not applicable. No data store and no client library | Lines 1–5 |
+| Database or cache connections | Not applicable. No data store and no client library | Lines 5–10 |
 | Outbound HTTP (`http.Agent` pools) | Not applicable. The process makes no outbound calls | Section 5.3.2 |
-| Inbound client connections | No pool in code. Node.js HTTP/1.1 keep-alive lets one client socket carry many requests. Idle sockets close after about 6 s, and there is no per-socket request limit (`maxRequestsPerSocket` 0) | Line 5; Section 6.1.3.3 |
+| Inbound client connections | No pool in code. Node.js HTTP/1.1 keep-alive lets one client socket carry many requests. Idle sockets close after about 6 s, and there is no per-socket request limit (`maxRequestsPerSocket` 0) | Line 10; Section 6.1.3.3 |
 
 Keep-alive is the only form of connection reuse. It comes from Node.js defaults, not from configuration in the code.
 
@@ -3010,8 +3017,10 @@ Throughput is limited by the single event-loop thread, not by data access. Scali
 
 **Repository files and folders**
 
-- `server (1).js` - The whole system and the only evidence for this section. Line 1 loads lodash (never used). Line 3 loads the built-in `http` and creates the server. Line 4 is the only data, the literal `Hello, World!\n`, and the handler never reads `req`. Line 5 binds port 3000 on `::` and prints the readiness line. The file contains no database driver, ORM, `fs`, cache, session, cookie or `process.env` code. It was also the subject of the runtime check: one listening socket, no data files, no writes, request bodies not logged.
-- `` (repository root) - Contains only `server (1).js` on every ref (`main`, `0610_02`, `origin/main`, `origin/0610_02`) at the single commit `f0ba73b`. It holds no schema, model, migration, seed, data-store configuration, `.env`, Compose or container files.
+- `server (1).js` - The whole system and the only evidence for this section, ten lines in the `0610_02` state at `93f60af`. Line 5 loads lodash (never used). Line 8 loads the built-in `http` and creates the server. Line 9 is the only data, the literal `Hello, World!\n`, and the handler never reads `req`. Line 10 binds port 3000 on `::` and prints the readiness line. Four JSDoc comments (lines 1-3 and line 7) add no behavior. The file contains no database driver, ORM, `fs`, cache, session, cookie or `process.env` code. It was also the subject of the runtime check: one listening socket, no data files, no writes, request bodies not logged.
+- `README.md` - Project name, install step and run step; no data-store configuration.
+- `blitzy/documentation/Technical Specifications.md` - The tracked copy of this specification, present on `0610_02`.
+- \`\` (repository root) - Holds `server (1).js`, `README.md` and the `blitzy/` documentation folder on `0610_02` and `origin/0610_02` at `93f60af`; `main` and `origin/main` at `f0ba73b` hold only `server (1).js`. It holds no schema, model, migration, seed, data-store configuration, `.env`, Compose or container files.
 
 **Technical Specification cross-references**
 
@@ -3036,40 +3045,40 @@ Throughput is limited by the single event-loop thread, not by data access. Scali
 
 **Integration Architecture is not applicable for this system.**
 
-The system at commit `f0ba73b`, identical on `main` and `0610_02`, is the single five-line file `server (1).js`. It integrates with no external system or service. It makes no outbound calls, consumes no messages, and exposes no designed API. Its only interface is an inbound HTTP listener that returns the same constant for every request. Every check for an integration architecture comes back negative:
+The system is the single file `server (1).js`, ten lines and 426 bytes in the `0610_02` state at `93f60af`. It integrates with no external system or service. It makes no outbound calls, consumes no messages, and exposes no designed API. Its only interface is an inbound HTTP listener that returns the same constant for every request. Every check for an integration architecture comes back negative:
 
 | Indicator of an Integration Architecture | Observed in Repository | Evidence |
 |---|---|---|
-| Outbound calls to external APIs or services | None. No `http.request`, `http.get`, `https`, `fetch` or client library. At runtime the process held no outbound connections, only its listening socket | `server (1).js` lines 1–5; runtime socket check |
-| Designed API surface (routes, schemas, versions) | None. The handler never reads `req`, so method, path, query, headers and body have no effect | Lines 3–4 |
-| Authentication, authorization or rate limiting | None. Credentials are ignored and a 5,000-request burst got 5,000 `200 OK` responses | Lines 3–4; Section 5.4.4 |
-| Message queues, event streams or batch jobs | None. No broker client, stream pipeline, timer or scheduler | Lines 1–5; Section 5.3.2 |
-| Third-party SDKs or service credentials | None. No environment variables, secrets or service SDKs are read or loaded | Lines 1–5; Section 3.4 |
+| Outbound calls to external APIs or services | None. No `http.request`, `http.get`, `https`, `fetch` or client library. At runtime the process held no outbound connections, only its listening socket | `server (1).js` lines 5–10; runtime socket check |
+| Designed API surface (routes, schemas, versions) | None. The handler never reads `req`, so method, path, query, headers and body have no effect | Lines 8–9 |
+| Authentication, authorization or rate limiting | None. Credentials are ignored and a 5,000-request burst got 5,000 `200 OK` responses | Lines 8–9; Section 5.4.4 |
+| Message queues, event streams or batch jobs | None. No broker client, stream pipeline, timer or scheduler | Lines 5–10; Section 5.3.2 |
+| Third-party SDKs or service credentials | None. No environment variables, secrets or service SDKs are read or loaded | Lines 5–10; Section 3.4 |
 | API gateway, proxy or interface definition files | None. No gateway configuration, OpenAPI document or contract files exist | Repository root |
 
-**Why it does not apply.** The code is a minimal fixed-response "Hello, World" server (Section 1.2.1). Its parts communicate only through in-process event callbacks (`'request'` and `'listening'`) on one event loop (Section 5.3.2). The only package it loads, lodash, is an in-process library read from `node_modules` at startup and never used (F-005-RQ-003). It is not a service. The npm public registry is the only external system in the picture, and only an operator installing lodash by hand contacts it. The repository contains no step that does so (Section 3.4). With no downstream dependencies and no meaningful inbound contract, there are no endpoints to version, no consumers to authenticate, no messages to route and no partner contracts to govern.
+**Why it does not apply.** The code is a minimal fixed-response "Hello, World" server (Section 1.2.1). Its parts communicate only through in-process event callbacks (`'request'` and `'listening'`) on one event loop (Section 5.3.2). The only package it loads, lodash, is an in-process library read from `node_modules` at startup and never used (F-005-RQ-003). It is not a service. The npm public registry is the only external system in the picture, and only an operator installing lodash by hand contacts it; the repository records that step nowhere except the `npm install lodash` line in `README.md` (Section 3.4). With no downstream dependencies and no meaningful inbound contract, there are no endpoints to version, no consumers to authenticate, no messages to route and no partner contracts to govern.
 
 The sub-sections below give the as-built position for each area this section normally covers: API design, message processing and external systems. Each question gets an evidence-based answer. Where a capability is missing, the text says when the host environment would have to supply it (assumption AA-05, Section 5.1.1). These sub-sections describe what exists. They do not propose a target design.
 
-**Evidence coverage:** complete. The repository's only file was read in full and its interface tested on Node.js v22.23.3, with lodash replaced by an empty stub. Assumption AA-02 (Section 5.1.1) applies to other runtime versions.
+**Evidence coverage:** complete. The source file was read in full, together with `README.md`, and its interface tested on Node.js v22.23.3, with lodash replaced by an empty stub. Assumption AA-02 (Section 5.1.1) applies to other runtime versions.
 
 ### 6.3.2 API Design (As-Built Position)
 
-The system has no designed API. It has one catch-all HTTP listener whose behaviour comes from a single `res.end` call (line 4) and the Node.js HTTP layer defaults. The tables below set out that de facto contract as observed on Node.js v22.23.3.
+The system has no designed API. It has one catch-all HTTP listener whose behaviour comes from a single `res.end` call (line 9) and the Node.js HTTP layer defaults. The tables below set out that de facto contract as observed on Node.js v22.23.3.
 
 #### 6.3.2.1 Protocol Specifications
 
 | Protocol Attribute | As Built | Evidence |
 |---|---|---|
-| Transport | Plaintext TCP on the IPv6 wildcard `::` (all interfaces), port `3000`. The readiness line advertises `127.0.0.1`, but that is display text only (AA-04) | Line 5; Section 5.1.1 |
-| Application protocol | HTTP/1.1, served by the built-in `http` module. HTTP/1.0 requests are answered as `HTTP/1.1 200 OK` with `Connection: close` and no `Content-Length` | Line 3; runtime check |
-| HTTP/2 and TLS | Not supported. An HTTP/2 preface or a TLS ClientHello gets a plaintext `HTTP/1.1 400 Bad Request` and the socket is closed. An `Upgrade: h2c` request is served as HTTP/1.1 | Line 3 (plain `http`); runtime check |
-| Methods | Any of the 35 methods the Node.js parser recognises, including `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS` and `HEAD`, gets `200 OK`. An unrecognised token such as `FOO` gets `400` from the parser | Lines 3–4; runtime check |
-| Paths and query strings | Any. `/`, `/secure`, `/api/v1/users` and `/v2/anything` return identical responses | Line 4 |
+| Transport | Plaintext TCP on the IPv6 wildcard `::` (all interfaces), port `3000`. The readiness line advertises `127.0.0.1`, but that is display text only (AA-04) | Line 10; Section 5.1.1 |
+| Application protocol | HTTP/1.1, served by the built-in `http` module. HTTP/1.0 requests are answered as `HTTP/1.1 200 OK` with `Connection: close` and no `Content-Length` | Line 8; runtime check |
+| HTTP/2 and TLS | Not supported. An HTTP/2 preface or a TLS ClientHello gets a plaintext `HTTP/1.1 400 Bad Request` and the socket is closed. An `Upgrade: h2c` request is served as HTTP/1.1 | Line 8 (plain `http`); runtime check |
+| Methods | Any of the 35 methods the Node.js parser recognises, including `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS` and `HEAD`, gets `200 OK`. An unrecognised token such as `FOO` gets `400` from the parser | Lines 8–9; runtime check |
+| Paths and query strings | Any. `/`, `/secure`, `/api/v1/users` and `/v2/anything` return identical responses | Line 9 |
 | Request headers | Not read. HTTP/1.1 requests must still carry a `Host` header (`400` otherwise), and headers must total no more than 16,384 bytes (`431` otherwise) | Node.js defaults; Section 4.3.2 (E-03, E-04) |
-| Request body | Never read. A chunked body and a 10 MB `POST` both got `200 OK` (the 10 MB request took 3 ms). `Expect: 100-continue` is answered with `100 Continue` automatically | Line 4; runtime check |
+| Request body | Never read. A chunked body and a 10 MB `POST` both got `200 OK` (the 10 MB request took 3 ms). `Expect: 100-continue` is answered with `100 Continue` automatically | Line 9; runtime check |
 | Connection management | Keep-alive by default (`Keep-Alive: timeout=5`). Idle sockets close after about 6 s. Three pipelined requests on one socket got three `200 OK` responses | Node.js defaults; Section 4.1 (WF-03) |
-| Protocol upgrade | No `'upgrade'` listener. A WebSocket upgrade request gets the normal `200 OK` body and the socket is then closed. No WebSocket session is set up | Lines 3–5; runtime check |
+| Protocol upgrade | No `'upgrade'` listener. A WebSocket upgrade request gets the normal `200 OK` body and the socket is then closed. No WebSocket session is set up | Lines 8–10; runtime check |
 | Timeouts | Headers must arrive within 60 s (enforced 60–90 s after the connection opens) and the whole request within 300 s | Node.js defaults; Section 5.1.4 |
 
 **Endpoint catalogue.** There is one logical endpoint, and it matches everything:
@@ -3085,7 +3094,7 @@ The system has no designed API. It has one catch-all HTTP listener whose behavio
 | Status | `200 OK` on every dispatched request | Node.js default (`res.statusCode` never set) |
 | Headers | `Date`, `Connection: keep-alive`, `Keep-Alive: timeout=5`, `Content-Length: 14` | Node.js defaults; no `setHeader` or `writeHead` in the code |
 | Absent headers | `Content-Type`, `Server`, `Cache-Control`, `Access-Control-*`, `X-RateLimit-*`, `Retry-After` | Runtime header capture across 5,000 responses |
-| Body | `Hello, World!` followed by a newline, UTF-8, no declared media type | Line 4 |
+| Body | `Hello, World!` followed by a newline, UTF-8, no declared media type | Line 9 |
 
 **Error responses.** The application code produces no error status. Every non-`200` response comes from the Node.js HTTP layer before the handler runs:
 
@@ -3102,9 +3111,9 @@ There are none. Every caller is anonymous (Section 5.4.4).
 
 | Mechanism | Status | Evidence |
 |---|---|---|
-| Bearer tokens, API keys, Basic auth | Not implemented. A request with `Authorization: Bearer abc` to `/secure` got the standard `200 OK` | Lines 3–4; runtime check |
-| Sessions and cookies | Not implemented. No `Set-Cookie` is sent and no `Cookie` header is read | Line 4 |
-| Mutual TLS or client certificates | Not possible. The server has no TLS layer | Line 3 |
+| Bearer tokens, API keys, Basic auth | Not implemented. A request with `Authorization: Bearer abc` to `/secure` got the standard `200 OK` | Lines 8–9; runtime check |
+| Sessions and cookies | Not implemented. No `Set-Cookie` is sent and no `Cookie` header is read | Line 9 |
+| Mutual TLS or client certificates | Not possible. The server has no TLS layer | Line 8 |
 | Identity provider integration (for example Auth0) | Not used | Section 3.4 |
 
 Network position is the only gate. Any client that can reach `::` port 3000 gets the full service. Restricting access is left to host firewalls or an external proxy (AA-05, Section 2.4.3).
@@ -3130,13 +3139,13 @@ Any quota enforcement would have to come from an external proxy or gateway. The 
 
 #### 6.3.2.5 Versioning Approach
 
-The interface has no versioning. Paths that look versioned (`/api/v1/users`, `/v2/anything`) get the same response as `/`. There is no version header, media-type versioning or content negotiation: an `Accept: application/json` request still gets the untyped text body. The only version identifier is the Git commit `f0ba73b`.
+The interface has no versioning. Paths that look versioned (`/api/v1/users`, `/v2/anything`) get the same response as `/`. There is no version header, media-type versioning or content negotiation: an `Accept: application/json` request still gets the untyped text body. The only version identifiers are Git commits: `f0ba73b` is the requirements baseline and `93f60af` is the current head.
 
 The response contract can still change without any code change. Its status line, headers, timeouts and parser limits all come from the Node.js runtime, whose version the repository does not pin (constraint C-003). The contract in Section 6.3.2.1 holds for v22.23.3 only (AA-02).
 
 #### 6.3.2.6 Documentation Standards
 
-The repository has no API documentation: no OpenAPI or Swagger file, README, JSDoc, code comments or example requests. The interface is documented only in this specification: requirements F-002-RQ-001 to F-002-RQ-005 (Section 2.2), the interface table in Section 5.1.1, and Section 6.3.2.1. The only self-description at runtime is the readiness line, `Server running at http://127.0.0.1:3000/`. It names a loopback URL, which understates the actual all-interfaces bind (AA-04).
+The repository has no API documentation: no OpenAPI or Swagger file, no example requests, and no interface reference. `README.md` gives only the project name, the install step and the run step, and the four JSDoc comments (lines 1-3 and line 7) restate the response behavior; neither documents the interface. The interface is documented only in this specification: requirements F-002-RQ-001 to F-002-RQ-005 (Section 2.2), the interface table in Section 5.1.1, and Section 6.3.2.1. The only self-description at runtime is the readiness line, `Server running at http://127.0.0.1:3000/`. It names a loopback URL, which understates the actual all-interfaces bind (AA-04).
 
 #### 6.3.2.7 API Architecture Diagram
 
@@ -3158,7 +3167,7 @@ flowchart LR
             Guards["Protocol guards<br/>Host header, 16,384-byte headers,<br/>60 s headers, 300 s request"]
             Serializer["Response serializer<br/>200 OK, Date, Connection,<br/>Keep-Alive, Content-Length"]
         end
-        Handler["Request Handler, lines 3-4<br/>ignores req, res.end constant"]
+        Handler["Request Handler, lines 8-9<br/>ignores req, res.end constant"]
     end
     Reject["400, 431 or 408<br/>socket closed"]
     Client -->|"direct connection"| Sock
@@ -3181,16 +3190,16 @@ The system processes no messages in the integration sense. It has no broker, que
 
 #### 6.3.3.1 Event Processing Patterns
 
-The `http.Server` built on line 3 is a Node.js event emitter. The code subscribes to two of its events. Node.js defaults handle every other event that matters to the interface:
+The `http.Server` built on line 8 is a Node.js event emitter. The code subscribes to two of its events. Node.js defaults handle every other event that matters to the interface:
 
 | Event | Listener in Code | Behaviour | Evidence |
 |---|---|---|---|
-| `'request'` | Arrow function passed to `createServer` | Runs once per parsed request and calls `res.end('Hello, World!\n')` | Lines 3–4 |
-| `'listening'` | Arrow function passed to `listen` | Runs once after the bind and prints the readiness line | Line 5 |
+| `'request'` | Arrow function passed to `createServer` | Runs once per parsed request and calls `res.end('Hello, World!\n')` | Lines 8–9 |
+| `'listening'` | Arrow function passed to `listen` | Runs once after the bind and prints the readiness line | Line 10 |
 | `'clientError'` | None | Node.js default replies `400`, `431` or `408` and closes the socket (E-03 to E-05) | Section 4.3.2 |
 | `'checkContinue'` | None | Node.js default sends `100 Continue`, then emits `'request'` | Runtime check |
 | `'upgrade'` | None | The request is passed to the `'request'` handler and the socket is closed after the response | Runtime check |
-| `'error'` | None | A bind failure becomes an uncaught exception, so the process exits with code 1 (E-02) | Line 5; Section 4.3.2 |
+| `'error'` | None | A bind failure becomes an uncaught exception, so the process exits with code 1 (E-02) | Line 10; Section 4.3.2 |
 | `SIGINT`, `SIGTERM` | None (`process.on` is absent) | Default termination with exit code `130` or `143`; open connections are dropped (E-07) | Section 4.1 (WF-04) |
 
 **Dispatch model.** All events are delivered synchronously on the single JavaScript event-loop thread, in the order the runtime raises them. The request listener does no I/O and cannot block or fail, so each event finishes before the next is taken. There is no fan-out, no subscriber registry and no event persistence. Nothing is published outside the process.
@@ -3249,8 +3258,8 @@ flowchart TD
         EvError["'error' event"]
     end
     subgraph Consumers["Consumers"]
-        StartCb["Startup callback, line 5<br/>console.log readiness line"]
-        ReqCb["Request handler, lines 3-4<br/>res.end constant"]
+        StartCb["Startup callback, line 10<br/>console.log readiness line"]
+        ReqCb["Request handler, lines 8-9<br/>res.end constant"]
         DefClient["Node.js default<br/>400, 431 or 408, close socket"]
         Crash["No listener: uncaught,<br/>stderr trace, exit 1"]
         DefSig["Node.js default termination<br/>exit 130 or 143"]
@@ -3266,24 +3275,24 @@ flowchart TD
 
 ### 6.3.4 External Systems (As-Built Position)
 
-The code integrates with no external system. Its only counterparts are parts of the hosting environment: HTTP clients, the module resolution path, the Node.js runtime, the host network stack, the console and the parent process (Section 5.1.4). The npm public registry is involved only when an operator installs lodash by hand.
+The code integrates with no external system. Its only counterparts are parts of the hosting environment: HTTP clients, the module resolution path, the Node.js runtime, the host network stack, the console and the parent process (Section 5.1.4). The npm public registry is involved only when an operator installs lodash by hand, as `README.md` records.
 
 #### 6.3.4.1 Third-Party Integration Patterns
 
 | Integration Pattern | Status | Evidence |
 |---|---|---|
-| Outbound REST, SOAP or GraphQL calls | Not present. No HTTP client code or library; zero outbound sockets at runtime | Lines 1–5; runtime socket check |
-| Service SDKs (cloud, payments, identity, observability) | Not present. The only package loaded is lodash | Line 1; Section 3.4 |
-| Webhooks or callbacks to or from partners | Not present. The handler cannot tell one caller or path from another | Line 4 |
-| Polling or scheduled synchronisation | Not present. No timers or schedulers | Lines 1–5 |
-| In-process third-party library | lodash, loaded synchronously once at startup from `node_modules`. The `_` binding is never read | Line 1; F-005-RQ-003 |
-| Package registry | npm public registry (`https://registry.npmjs.org/`), contacted only during a manual `npm install lodash`. The repository has no manifest or install step | Section 3.3.3; Section 3.4 |
+| Outbound REST, SOAP or GraphQL calls | Not present. No HTTP client code or library; zero outbound sockets at runtime | Lines 5–10; runtime socket check |
+| Service SDKs (cloud, payments, identity, observability) | Not present. The only package loaded is lodash | Line 5; Section 3.4 |
+| Webhooks or callbacks to or from partners | Not present. The handler cannot tell one caller or path from another | Line 9 |
+| Polling or scheduled synchronisation | Not present. No timers or schedulers | Lines 5–10 |
+| In-process third-party library | lodash, loaded synchronously once at startup from `node_modules`. The `_` binding is never read | Line 5; F-005-RQ-003 |
+| Package registry | npm public registry (`https://registry.npmjs.org/`), contacted only during a manual `npm install lodash`, the step `README.md` records. The repository has no manifest | Section 3.3.3; Section 3.4 |
 
-The lodash import is the only third-party touchpoint, and it is a hard startup dependency. If lodash cannot be resolved, the process exits with code 1 before it opens a listener (E-01). Deleting line 1 removes the dependency and changes nothing else (Section 5.1.2).
+The lodash import is the only third-party touchpoint, and it is a hard startup dependency. If lodash cannot be resolved, the process exits with code 1 before it opens a listener (E-01). Deleting line 5 removes the dependency and changes nothing else (Section 5.1.2).
 
 #### 6.3.4.2 Legacy System Interfaces
 
-None exist. The code has no file-drop, FTP, database-link, mainframe, SOAP or proprietary-protocol interfaces. The Git history holds one commit, `f0ba73b` ("Add files via upload"), with no predecessor system or migration artefacts.
+None exist. The code has no file-drop, FTP, database-link, mainframe, SOAP or proprietary-protocol interfaces. The Git history holds nine commits, from `f0ba73b` ("Add files via upload") to the merge `93f60af`, with no predecessor system or migration artefacts.
 
 #### 6.3.4.3 API Gateway Configuration
 
@@ -3297,7 +3306,7 @@ If the host environment puts a gateway in front of the process (AA-05), the as-b
 | Health checking | No dedicated route. Any path returns `200 OK`, so a probe of `/` detects only refusal or timeout | Section 5.4.1 |
 | Authentication, quotas, CORS | None upstream, so the gateway would have to enforce all of them | Sections 6.3.2.2–6.3.2.4 |
 | Content typing | The upstream sends no `Content-Type`. A gateway that needs a declared media type would have to add one | Section 6.3.2.1 |
-| Exposure | The process binds all interfaces, so it is also reachable without going through the gateway unless the host blocks port 3000 | Line 5; AA-04 |
+| Exposure | The process binds all interfaces, so it is also reachable without going through the gateway unless the host blocks port 3000 | Line 10; AA-04 |
 
 #### 6.3.4.4 External Service Contracts
 
@@ -3343,22 +3352,22 @@ flowchart LR
     subgraph RunTime["Run time"]
         Clients(["HTTP clients"])
         subgraph App["Node.js process: server (1).js"]
-            L1["Line 1<br/>require lodash, unused"]
-            L3["Lines 3-4<br/>http.createServer and handler"]
-            L5["Line 5<br/>listen 3000 and log"]
+            L5["Line 5<br/>require lodash, unused"]
+            L89["Lines 8-9<br/>http.createServer and handler"]
+            L10["Line 10<br/>listen 3000 and log"]
             ExitSt["Process exit status<br/>1, 130 or 143"]
         end
         Console["stdout and stderr"]
         Parent["Parent shell or supervisor"]
     end
     NoOut["No outbound integrations:<br/>no HTTP clients, SDKs, databases,<br/>brokers, identity or cloud services"]
-    NodeMods -->|"synchronous require at startup"| L1
-    L1 --> L3 --> L5
-    Clients <-->|"HTTP/1.1 plaintext, :: port 3000"| L3
-    L5 -->|"readiness line"| Console
-    Parent -->|"launch, SIGINT or SIGTERM"| L1
+    NodeMods -->|"synchronous require at startup"| L5
+    L5 --> L89 --> L10
+    Clients <-->|"HTTP/1.1 plaintext, :: port 3000"| L89
+    L10 -->|"readiness line"| Console
+    Parent -->|"launch, SIGINT or SIGTERM"| L5
     ExitSt -->|"on termination"| Parent
-    L3 ~~~ NoOut
+    L89 ~~~ NoOut
 ```
 
 ### 6.3.5 Key Integration Sequences
@@ -3383,14 +3392,14 @@ sequenceDiagram
         NPM-->>FS: lodash package, latest 4.18.1
     end
     O->>P: node "server (1).js"
-    P->>FS: require('lodash'), line 1
+    P->>FS: require('lodash'), line 5
     alt lodash not resolvable
         FS-->>P: MODULE_NOT_FOUND
         P->>Out: stack trace on stderr
         P-->>O: exit code 1, no listener opened
     else lodash resolved
         FS-->>P: module object bound to _, never used
-        P->>P: require('http') and createServer, line 3
+        P->>P: require('http') and createServer, line 8
         P->>OS: listen(3000), no host argument
         alt Port 3000 already in use
             OS-->>P: EADDRINUSE :::3000
@@ -3413,7 +3422,7 @@ sequenceDiagram
     participant C as HTTP client
     participant T as Host TCP stack (:: port 3000)
     participant H as Node.js HTTP layer
-    participant R as Request Handler (lines 3-4)
+    participant R as Request Handler (lines 8-9)
     C->>T: TCP connect, plaintext
     T->>H: accept socket
     C->>H: Request line, headers, optional body
@@ -3467,8 +3476,10 @@ sequenceDiagram
 
 **Repository files and folders**
 
-- `server (1).js` - The whole system and the only integration surface. Line 1 is the lodash import, the only third-party touchpoint, which is never used. Lines 3–4 hold the single `http.Server` and its catch-all handler, which never reads `req`. Line 5 binds the literal port 3000 on `::` and registers the `'listening'` callback. The file contains no outbound client, broker, stream, timer, authentication, CORS, rate-limiting, versioning, environment-variable or API-documentation code. It was the subject of the interface runtime checks: credentials ignored, CORS preflight, versioned paths, HTTP/1.0, `100-continue`, WebSocket and h2c upgrades, HTTP/2 preface and TLS handshake rejected with `400`, the 5,000-request burst, pipelining, unknown method, missing `Host`, a 10 MB body, and zero outbound sockets.
-- `` (repository root) - Contains only `server (1).js` on every branch and remote ref (`main`, `0610_02`, `origin/main`, `origin/0610_02`) at the single commit `f0ba73b`. There is no manifest, OpenAPI file, README, gateway or proxy configuration, or deployment descriptor.
+- `server (1).js` - The whole system and the only integration surface, ten lines in the `0610_02` state at `93f60af`. Line 5 is the lodash import, the only third-party touchpoint, which is never used. Lines 8–9 hold the single `http.Server` and its catch-all handler, which never reads `req`. Line 10 binds the literal port 3000 on `::` and registers the `'listening'` callback. Four JSDoc comments (lines 1-3 and line 7) add no behavior. The file contains no outbound client, broker, stream, timer, authentication, CORS, rate-limiting, versioning, environment-variable or API-documentation code. It was the subject of the interface runtime checks: credentials ignored, CORS preflight, versioned paths, HTTP/1.0, `100-continue`, WebSocket and h2c upgrades, HTTP/2 preface and TLS handshake rejected with `400`, the 5,000-request burst, pipelining, unknown method, missing `Host`, a 10 MB body, and zero outbound sockets.
+- `README.md` - Project name, install step (`npm install lodash`) and run step. It documents the setup, not the interface.
+- `blitzy/documentation/Technical Specifications.md` - The tracked copy of this specification, present on `0610_02`.
+- \`\` (repository root) - Holds `server (1).js`, `README.md` and the `blitzy/` documentation folder on `0610_02` and `origin/0610_02` at `93f60af`; `main` and `origin/main` at `f0ba73b` hold only `server (1).js`. There is no manifest, OpenAPI file, gateway or proxy configuration, or deployment descriptor.
 
 **Technical Specification cross-references**
 
@@ -3496,37 +3507,37 @@ sequenceDiagram
 
 **Detailed Security Architecture is not applicable for this system.**
 
-The system at commit `f0ba73b`, identical on `main` and `0610_02`, is the single five-line file `server (1).js`. It has no users, credentials, secrets or stored data. Every caller gets the same public 14-byte constant, `Hello, World!\n`, so there is nothing to authenticate, authorize, encrypt or mask. Every check for a dedicated security architecture comes back negative:
+The system is the single file `server (1).js`, ten lines and 426 bytes in the `0610_02` state at `93f60af`. It has no users, credentials, secrets or stored data. Every caller gets the same public 14-byte constant, `Hello, World!\n`, so there is nothing to authenticate, authorize, encrypt or mask. Every check for a dedicated security architecture comes back negative:
 
 | Indicator of a Security Architecture | Observed in Repository | Evidence |
 |---|---|---|
-| Identities, credentials or an identity provider | None. No user model, login, password, token, cookie or `Authorization` handling. Auth0 and similar providers are not used | `server (1).js` lines 1–5; Section 3.4 |
-| Access-control rules (roles, scopes, ACLs, route guards) | None. The handler never reads `req`, so no input can change the outcome | Lines 3–4; Section 6.3.2.3 |
-| Sensitive data or protected resources | None. The only output is a string literal. Nothing is stored, cached or read from disk | Line 4; Section 6.2 |
-| Secrets, keys or certificates | None in the source or the Git history. No `process.env` reads, configuration files or key material | Lines 1–5; scan of the history of commit `f0ba73b` |
-| Cryptography or TLS | None. The plain `http` module is used. The OpenSSL 3.5.8 bundled with Node.js v22.23.3 is never invoked | Line 3; runtime check |
-| Security or audit logging | None. The only log output is the startup readiness line | Line 5; Section 5.4.2 |
-| Regulated data (personal, payment, health) | None processed or retained by application code | Lines 3–4 |
+| Identities, credentials or an identity provider | None. No user model, login, password, token, cookie or `Authorization` handling. Auth0 and similar providers are not used | `server (1).js` lines 5–10; Section 3.4 |
+| Access-control rules (roles, scopes, ACLs, route guards) | None. The handler never reads `req`, so no input can change the outcome | Lines 8–9; Section 6.3.2.3 |
+| Sensitive data or protected resources | None. The only output is a string literal. Nothing is stored, cached or read from disk | Line 9; Section 6.2 |
+| Secrets, keys or certificates | None in the source or the Git history. No `process.env` reads, configuration files or key material | Lines 5–10; scan of the full nine-commit history |
+| Cryptography or TLS | None. The plain `http` module is used. The OpenSSL 3.5.8 bundled with Node.js v22.23.3 is never invoked | Line 8; runtime check |
+| Security or audit logging | None. The only log output is the startup readiness line | Line 10; Section 5.4.2 |
+| Regulated data (personal, payment, health) | None processed or retained by application code | Lines 8–9 |
 
 **Why it does not apply.** The code is a minimal fixed-response "Hello, World" server (Section 1.2.1). With no confidential data and no reflected input, the usual security domains have no asset to protect. The real security concerns are the process and its host: network exposure on all interfaces (AA-04), availability under load, the unpinned runtime and third-party module, and running the process with least privilege. Standard practices cover all of these. Some are met by the code or by Node.js defaults; the rest fall to the host environment (assumption AA-05, Section 5.1.1).
 
-**Standard security practices applied instead.** Status is as built at `f0ba73b` on Node.js v22.23.3:
+**Standard security practices applied instead.** Status is as built in the `0610_02` state at `93f60af` on Node.js v22.23.3:
 
 | Standard Practice | As-Built Status | Provided By | Evidence |
 |---|---|---|---|
-| Minimal attack surface: no input processing or reflection | **Met.** Request line, headers and body are never read. A request carrying `<script>` in its path, query and headers got exactly `Hello, World!\n` | Code | Lines 3–4; runtime check |
+| Minimal attack surface: no input processing or reflection | **Met.** Request line, headers and body are never read. A request carrying `<script>` in its path, query and headers got exactly `Hello, World!\n` | Code | Lines 8–9; runtime check |
 | No secrets in source control | **Met.** No credentials, keys or tokens in the file or the history | Code | Git history scan |
 | Hardened HTTP parsing | **Met.** Requests with both `Content-Length` and `Transfer-Encoding`, duplicate `Content-Length`, no `Host`, or malformed request lines get `400`. Headers over 16,384 bytes get `431` | Node.js defaults | Runtime check; Section 3.2.1 |
 | No information disclosure in responses | **Met.** No `Server` or `X-Powered-By` header. Parser rejections have empty bodies. Stack traces go only to stderr | Node.js defaults | Runtime check; Section 5.4.4 |
 | Slow-client bounds | **Partially met.** 60 s `headersTimeout` and 300 s `requestTimeout`. No connection cap or rate limit | Node.js defaults | Section 6.3.2.4 |
 | Least-privilege process identity | **Possible, not enforced.** Port 3000 needs no privilege, and the server ran correctly as the unprivileged user `nobody`. The repository sets no user | Host | Runtime check |
-| Encryption in transit | **Not met in process.** Plaintext only; TLS must be terminated in front of the process | Host (AA-05) | Line 3; Section 6.3.4.3 |
-| Network access restriction | **Delegated.** The process binds `::` on all interfaces. Only host firewalls or network policy limit reachability | Host (AA-05) | Line 5; Section 2.4.3 |
-| Dependency pinning and vulnerability scanning | **Not met.** lodash is undeclared and unpinned, with no lockfile (C-002) | — | Line 1; Section 3.3.4 |
+| Encryption in transit | **Not met in process.** Plaintext only; TLS must be terminated in front of the process | Host (AA-05) | Line 8; Section 6.3.4.3 |
+| Network access restriction | **Delegated.** The process binds `::` on all interfaces. Only host firewalls or network policy limit reachability | Host (AA-05) | Line 10; Section 2.4.3 |
+| Dependency pinning and vulnerability scanning | **Not met.** lodash is undeclared and unpinned, with no lockfile (C-002) | — | Line 5; Section 3.3.4 |
 | Supported, patched runtime | **Not enforced.** Node.js is not pinned (C-003). v22 receives maintenance fixes until 2027-04-30 | Host | Section 3.2.3 |
 | Security testing in CI | **Not met.** No tests, linters or scanners (C-006) | — | Repository root |
 
-**Evidence coverage:** complete. The repository's only file was read in full. Its security behaviour was tested on Node.js v22.23.3, with lodash replaced by an empty stub. Assumption AA-02 (Section 5.1.1) applies to other runtime versions. The sub-sections below give the as-built position for each area this section normally covers. They describe what exists; they do not propose a target design.
+**Evidence coverage:** complete. The source file was read in full, together with `README.md`. Its security behaviour was tested on Node.js v22.23.3, with lodash replaced by an empty stub. Assumption AA-02 (Section 5.1.1) applies to other runtime versions. The sub-sections below give the as-built position for each area this section normally covers. They describe what exists; they do not propose a target design.
 
 ### 6.4.2 Authentication Framework (As-Built Position)
 
@@ -3536,10 +3547,10 @@ The system authenticates no one. Every caller who can reach `::` port 3000 is an
 
 | Identity Type | As Built | Evidence |
 |---|---|---|
-| End users | None. No user model, registration, directory or identity store | Lines 1–5 |
+| End users | None. No user model, registration, directory or identity store | Lines 5–10 |
 | External identity provider | None. No OIDC, SAML or OAuth integration; Auth0 is not used | Section 3.4 |
 | Service-to-service identity | None. The server makes no outbound calls and accepts no client certificates (it has no TLS layer) | Section 6.3.4.1 |
-| Client network identity | Not inspected. The handler never reads the socket address or `X-Forwarded-For` | Lines 3–4; Section 6.3.4.3 |
+| Client network identity | Not inspected. The handler never reads the socket address or `X-Forwarded-For` | Lines 8–9; Section 6.3.4.3 |
 | Process (OS) identity | Chosen by whoever launches the process; the repository sets none. Port 3000 is unprivileged, and the server ran correctly as `nobody` | Runtime check |
 
 #### 6.4.2.2 Multi-Factor Authentication
@@ -3590,7 +3601,7 @@ sequenceDiagram
     participant C as HTTP client (anonymous)
     participant N as Host network path
     participant H as Node.js HTTP layer, :: port 3000
-    participant R as Request Handler (lines 3-4)
+    participant R as Request Handler (lines 8-9)
     C->>N: TCP connect, plaintext
     alt Host firewall or network policy blocks port 3000 (AA-05, not in repository)
         N-->>C: Connection refused or dropped
@@ -3611,7 +3622,7 @@ sequenceDiagram
 
 ### 6.4.3 Authorization System (As-Built Position)
 
-The system makes no authorization decisions. The handler on lines 3–4 runs the same single statement for every request, so method, path, headers and body cannot change the outcome. Access is decided only by whether a client can reach the socket at all.
+The system makes no authorization decisions. The handler on lines 8–9 runs the same single statement for every request, so method, path, headers and body cannot change the outcome. Access is decided only by whether a client can reach the socket at all.
 
 #### 6.4.3.1 Role-Based Access Control
 
@@ -3625,11 +3636,11 @@ There are no permissions to grant, revoke or review, and no administrative inter
 
 | Resource | Exposure | Protection | Evidence |
 |---|---|---|---|
-| Response body `Hello, World!\n` | Public to every reachable client | None needed: constant, non-sensitive | Line 4 |
-| Host file system | Not exposed. The process opens no files at runtime; `/../../etc/passwd` sent with `--path-as-is` returned only the constant | No file-serving code exists | Lines 3–4; runtime check |
+| Response body `Hello, World!\n` | Public to every reachable client | None needed: constant, non-sensitive | Line 9 |
+| Host file system | Not exposed. The process opens no files at runtime; `/../../etc/passwd` sent with `--path-as-is` returned only the constant | No file-serving code exists | Lines 8–9; runtime check |
 | Process internals (versions, stack traces) | Not exposed to clients. No `Server` header; parser rejections have empty bodies | Node.js defaults | Runtime check |
 | Cross-origin reads from browsers | No CORS policy. A preflight gets `200 OK` with no `Access-Control-*` headers, so browsers block cross-origin reads by default | Browser default, not server policy | Section 6.3.2.3 |
-| Port 3000 on every interface | Reachable from any network the host is attached to | Host firewall or network policy only (AA-05) | Line 5; AA-04 |
+| Port 3000 on every interface | Reachable from any network the host is attached to | Host firewall or network policy only (AA-05) | Line 10; AA-04 |
 
 #### 6.4.3.4 Policy Enforcement Points
 
@@ -3640,14 +3651,14 @@ No enforcement point exists in application code. Requests are filtered only befo
 | PEP 1: host firewall, network policy or reverse proxy | Outside the repository | Which clients can reach `::` port 3000 | Host-provided only; nothing in the repository (Section 6.3.4.3) |
 | PEP 2: Node.js HTTP parser | Node.js `http` layer (llhttp 9.4.3) | Well-formed HTTP/1.x; `Host` required; no conflicting `Content-Length` / `Transfer-Encoding`; headers ≤ 16,384 bytes | Active: `400` or `431`, then the socket is closed |
 | PEP 3: Node.js connection timers | Node.js `http` layer | Headers within 60 s (enforced 60–90 s); full request within 300 s | Active: `408`, then the socket is closed |
-| PEP 4: application authorization | Request Handler, lines 3–4 | Nothing | Absent: every dispatched request is allowed |
+| PEP 4: application authorization | Request Handler, lines 8–9 | Nothing | Absent: every dispatched request is allowed |
 | Rate or quota enforcement | None | — | Absent: a 5,000-request burst got 5,000 `200 OK` responses (Section 6.3.2.4) |
 
 PEP 2 and PEP 3 protect protocol integrity and availability. They are not access control: any well-formed request passes them.
 
 #### 6.4.3.5 Audit Logging
 
-No audit trail exists. The code's only output is `console.log` on line 5, and it writes no files:
+No audit trail exists. The code's only output is `console.log` on line 10, and it writes no files:
 
 | Security-Relevant Event | Recorded? | Where |
 |---|---|---|
@@ -3672,7 +3683,7 @@ flowchart TD
     PEP2 -- "Malformed, CL plus TE, duplicate<br/>Content-Length, no Host" --> Deny2["400 Bad Request, socket closed"]
     PEP2 -- "Headers over 16,384 bytes" --> Deny3["431, socket closed"]
     PEP2 -- "Headers incomplete in 60-90 s" --> Deny4["408, socket closed"]
-    PEP2 -- "Well-formed" --> Handler["Request Handler, lines 3-4"]
+    PEP2 -- "Well-formed" --> Handler["Request Handler, lines 8-9"]
     Handler --> NoDecision["No authorization decision:<br/>no roles, scopes, ACLs or route rules"]
     NoDecision --> Allow["200 OK, Hello, World!<br/>identical for every caller"]
     Allow -.-> NoAudit["No audit record:<br/>nothing written to stdout or disk"]
@@ -3689,19 +3700,19 @@ The system holds no data worth protecting for confidentiality. Its output is a p
 
 | Data Item | Classification | Handling in the Process | Evidence |
 |---|---|---|---|
-| Response body `Hello, World!\n` | Public | String literal sent on every request | Line 4 |
-| Request line, headers and body (may include client credentials or cookies) | Uncontrolled client input; potentially sensitive | Parsed by Node.js in memory, never read by application code, never logged or stored | Lines 3–4; runtime check |
-| Client network address | Potentially personal data under some privacy regimes | Held by the socket only for the life of the connection; never read or logged | Lines 3–4 |
-| Readiness log line | Public operational text | Written once to stdout; contains no request data | Line 5 |
-| Source code | No secrets | One file in Git at `f0ba73b` | Repository root |
+| Response body `Hello, World!\n` | Public | String literal sent on every request | Line 9 |
+| Request line, headers and body (may include client credentials or cookies) | Uncontrolled client input; potentially sensitive | Parsed by Node.js in memory, never read by application code, never logged or stored | Lines 8–9; runtime check |
+| Client network address | Potentially personal data under some privacy regimes | Held by the socket only for the life of the connection; never read or logged | Lines 8–9 |
+| Readiness log line | Public operational text | Written once to stdout; contains no request data | Line 10 |
+| Source code | No secrets | Two files in Git on `0610_02` at `93f60af` (`server (1).js` and `README.md`), with the earlier script on `main` at `f0ba73b` | Repository root |
 
 #### 6.4.4.2 Encryption Standards
 
 | Scope | As Built | Evidence |
 |---|---|---|
 | Data at rest | Not applicable. The process writes no files and has no database or cache | Section 6.2.1 |
-| Data in transit (client to server) | None. Plaintext HTTP/1.x via the `http` module. A TLS ClientHello gets a plaintext `HTTP/1.1 400 Bad Request` and the socket is closed | Line 3; Section 6.3.2.1 |
-| Cryptographic libraries | None used. Node.js v22.23.3 bundles OpenSSL 3.5.8, but no `crypto`, `tls` or `https` module is loaded | Lines 1–5; `process.versions` |
+| Data in transit (client to server) | None. Plaintext HTTP/1.x via the `http` module. A TLS ClientHello gets a plaintext `HTTP/1.1 400 Bad Request` and the socket is closed | Line 8; Section 6.3.2.1 |
+| Cryptographic libraries | None used. Node.js v22.23.3 bundles OpenSSL 3.5.8, but no `crypto`, `tls` or `https` module is loaded | Lines 5–10; `process.versions` |
 | Hashing and integrity | None at runtime. No lockfile, so the lodash code loaded at startup is not checked against an integrity hash | Section 3.3.4 |
 
 #### 6.4.4.3 Key Management
@@ -3722,7 +3733,7 @@ No masking rules exist, and none are needed:
 |---|---|---|
 | HTTP clients ↔ server, `::` port 3000 | Plaintext HTTP/1.x. No TLS, HSTS or HTTP/2 | Responses can be read or altered in transit. Any client-sent credentials are exposed |
 | Server → external services | None. Zero outbound sockets at runtime | None |
-| Operator install: `npm install lodash` | HTTPS to `https://registry.npmjs.org/`, manual and outside the repository | With no lockfile, nothing pins or verifies the tarball later |
+| Operator install: `npm install lodash` | HTTPS to `https://registry.npmjs.org/`, manual and outside the repository, as `README.md` records | With no lockfile, nothing pins or verifies the tarball later |
 | Process ↔ console and parent | Local stdout, stderr, signals and exit codes | Host-local only |
 
 **Response hardening headers.** None is set. The code calls neither `setHeader` nor `writeHead`, and only `Date`, `Connection`, `Keep-Alive` and `Content-Length` are sent:
@@ -3777,8 +3788,8 @@ flowchart LR
     subgraph Proc["Zone 2: Node.js process running server (1).js"]
         Listener["TCP listener<br/>:: all interfaces, port 3000, no TLS"]
         Guards["Node.js HTTP layer defaults<br/>llhttp parser, Host check,<br/>16,384-byte headers, 60 s and 300 s timeouts"]
-        Handler["Request Handler, lines 3-4<br/>constant 14-byte body, req unread"]
-        Lodash["lodash, line 1<br/>loaded, never called"]
+        Handler["Request Handler, lines 8-9<br/>constant 14-byte body, req unread"]
+        Lodash["lodash, line 5<br/>loaded, never called"]
     end
     subgraph Supply["Zone 3: supply chain, install time"]
         Registry[("npm public registry")]
@@ -3821,22 +3832,22 @@ Status values: **Implemented** (by the code's design), **Runtime default** (Node
 
 | Control Domain | Control | Status | Evidence |
 |---|---|---|---|
-| Authentication | Credential verification | Absent | Lines 3–4; Section 6.4.2 |
+| Authentication | Credential verification | Absent | Lines 8–9; Section 6.4.2 |
 | Authentication | Multi-factor authentication | N/A | Section 6.4.2.2 |
 | Authentication | Session management | N/A: stateless | ADR-004; Section 6.4.2.3 |
 | Authorization | Roles, permissions, route rules | Absent | Section 6.4.3.1 |
-| Authorization | Network reachability restriction | Host-delegated | Line 5 binds `::`; AA-04 |
-| Input handling | Application-level validation | N/A: input never read | Lines 3–4 |
+| Authorization | Network reachability restriction | Host-delegated | Line 10 binds `::`; AA-04 |
+| Input handling | Application-level validation | N/A: input never read | Lines 8–9 |
 | Input handling | HTTP protocol validation and smuggling defence | Runtime default | Section 6.4.3.4 |
-| Output handling | No reflection of request data | Implemented | Line 4; runtime check |
-| Data protection | Encryption in transit | Absent | Line 3; Section 6.4.4.2 |
+| Output handling | No reflection of request data | Implemented | Line 9; runtime check |
+| Data protection | Encryption in transit | Absent | Line 8; Section 6.4.4.2 |
 | Data protection | Encryption at rest | N/A: no data stored | Section 6.2 |
 | Data protection | Secrets and key management | N/A: no secrets | Section 6.4.4.3 |
 | Availability | Slow-client timeouts and header size limit | Runtime default | Section 3.2.1 |
 | Availability | Rate limiting and connection caps | Absent | Section 6.3.2.4 |
 | Availability | Process supervision and restart | Host-delegated | Section 3.6.3 |
 | Logging | Security and audit logging | Absent | Section 6.4.3.5 |
-| Logging | Sensitive data kept out of logs | Implemented | Line 5; runtime check |
+| Logging | Sensitive data kept out of logs | Implemented | Line 10; runtime check |
 | Hardening | Version banner suppression | Runtime default | Section 5.4.4 |
 | Hardening | Security response headers | Absent | Section 6.4.4.5 |
 | Hardening | Least-privilege OS user | Host-delegated | Runtime check as `nobody` |
@@ -3851,8 +3862,8 @@ No security policy is written down in the repository. The effective policies are
 | Policy | Defined in Repository | Effective Policy (Node.js v22.23.3) |
 |---|---|---|
 | Access | No | Open to every client that can reach `::` port 3000 |
-| Transport | Implicitly, by use of `http` (line 3) | Plaintext HTTP/1.x only; TLS and HTTP/2 attempts get `400` |
-| Bind scope | Implicitly, by omitting a host argument (line 5) | All interfaces (`::`) |
+| Transport | Implicitly, by use of `http` (line 8) | Plaintext HTTP/1.x only; TLS and HTTP/2 attempts get `400` |
+| Bind scope | Implicitly, by omitting a host argument (line 10) | All interfaces (`::`) |
 | Maximum request header size | No | 16,384 bytes; larger gets `431` |
 | Header receipt timeout | No | 60 s, enforced 60–90 s after connect; then `408` |
 | Full request timeout | No | 300 s |
@@ -3860,7 +3871,7 @@ No security policy is written down in the repository. The effective policies are
 | Requests per socket and concurrent connections | No | Unlimited |
 | `Host` header | No | Required on HTTP/1.1; missing gets `400` |
 | Parser leniency | No | Strict (`insecureHTTPParser` off) |
-| Logging | Implicitly, by line 5 | Readiness line only; no request data |
+| Logging | Implicitly, by line 10 | Readiness line only; no request data |
 | Dependency acceptance | No | Any resolvable lodash copy is loaded |
 | Runtime version | No | Any installed Node.js; only v22.23.3 verified (AA-02) |
 
@@ -3876,7 +3887,7 @@ The standard practices that are not met in the code (Section 6.4.1) become oblig
 | Terminate TLS in front of the process when traffic crosses untrusted networks | No encryption in transit | TLS-terminating reverse proxy forwarding plaintext HTTP/1.x to port 3000 | Section 6.3.4.3 |
 | Run as a non-root OS user | Process privilege is set by the launcher | Launch under an unprivileged account; verified working as `nobody` | Section 6.4.2.1 |
 | Provide a supported Node.js line | Unpinned runtime (C-003) | v22 (maintenance until 2027-04-30) or a later LTS line | Section 3.2.3 |
-| Remove or pin lodash | Unverified third-party code (C-002) | Delete line 1, or declare and lock `lodash` at `^4.18.1`, which audits clean | Sections 3.3.3, 3.3.4 |
+| Remove or pin lodash | Unverified third-party code (C-002) | Delete line 5, or declare and lock `lodash` at `^4.18.1`, which audits clean | Sections 3.3.3, 3.3.4 |
 | Enforce rate limits and connection caps if exposed | No DoS controls beyond timeouts | Quotas at a proxy or gateway | Section 6.3.2.4 |
 | Capture access and audit logs if required | No audit trail | Access logging at the proxy; capture stdout and stderr from the supervisor | Sections 5.4.2, 6.4.3.5 |
 
@@ -3886,8 +3897,10 @@ Until these obligations are met by the host, the system suits only trusted netwo
 
 **Repository files and folders**
 
-- `server (1).js` - The whole system and its entire security surface. Line 1 loads lodash, which is undeclared, unpinned and never called. Line 3 uses the plain `http` module, with no TLS. Line 4 is the catch-all handler, which never reads `req` and returns a constant. Line 5 binds the literal port 3000 on `::` and logs a readiness line containing no request data. The file has no authentication, authorization, session, token, password, cryptography, security-header, environment-variable or audit code. It was the subject of the security runtime checks: Bearer and Basic credentials and cookies ignored; no reflection of script payloads; path traversal inert; no security or banner headers; request-smuggling patterns, missing `Host` and malformed lines rejected with `400`; oversized headers rejected with `431`; TLS handshake failure; bind on `::`; correct operation as the unprivileged user `nobody`; and no credentials in stdout.
-- `` (repository root) - Contains only `server (1).js` on every branch and remote ref (`main`, `0610_02`, `origin/main`, `origin/0610_02`) at the single commit `f0ba73b`. There are no manifests, lockfiles, certificates, key files, environment files, proxy configuration or CI security tooling. A scan of the Git history found no secrets.
+- `server (1).js` - The whole system and its entire security surface, ten lines in the `0610_02` state at `93f60af`. Line 5 loads lodash, which is undeclared, unpinned and never called. Line 8 uses the plain `http` module, with no TLS. Line 9 is the catch-all handler, which never reads `req` and returns a constant. Line 10 binds the literal port 3000 on `::` and logs a readiness line containing no request data. Four JSDoc comments (lines 1-3 and line 7) add no behavior. The file has no authentication, authorization, session, token, password, cryptography, security-header, environment-variable or audit code. It was the subject of the security runtime checks: Bearer and Basic credentials and cookies ignored; no reflection of script payloads; path traversal inert; no security or banner headers; request-smuggling patterns, missing `Host` and malformed lines rejected with `400`; oversized headers rejected with `431`; TLS handshake failure; bind on `::`; correct operation as the unprivileged user `nobody`; and no credentials in stdout.
+- `README.md` - Project name, install step and run step; it holds no secret and configures no security control.
+- `blitzy/documentation/Technical Specifications.md` - The tracked copy of this specification, present on `0610_02`.
+- \`\` (repository root) - Holds `server (1).js`, `README.md` and the `blitzy/` documentation folder on `0610_02` and `origin/0610_02` at `93f60af`; `main` and `origin/main` at `f0ba73b` hold only `server (1).js`. There are no manifests, lockfiles, certificates, key files, environment files, proxy configuration or CI security tooling. A scan of the nine-commit history found no secrets.
 
 **Technical Specification cross-references**
 
@@ -3917,27 +3930,27 @@ Until these obligations are met by the host, the system suits only trusted netwo
 
 **Detailed Monitoring Architecture is not applicable for this system.**
 
-The system at commit `f0ba73b`, identical on `main` and `0610_02`, is the single five-line file `server (1).js`. One process returns the constant 14-byte body `Hello, World!\n` to every request. It has no runtime dependencies to watch, no data, no business transactions and no service-level commitments, and it emits no telemetry. Every check for a monitoring architecture comes back negative:
+The system is the single file `server (1).js`, ten lines and 426 bytes in the `0610_02` state at `93f60af`. One process returns the constant 14-byte body `Hello, World!\n` to every request. It has no runtime dependencies to watch, no data, no business transactions and no service-level commitments, and it emits no telemetry. Every check for a monitoring architecture comes back negative:
 
 | Indicator of a Monitoring Architecture | Observed in Repository | Evidence |
 |---|---|---|
-| Metrics instrumentation (Prometheus, StatsD, OpenTelemetry, `perf_hooks`) | None. No metrics library, counter or timer. `GET /metrics` returns `Hello, World!\n` | Lines 1–5; runtime check |
-| Health, readiness or liveness endpoints | None. `/health`, `/healthz`, `/ready`, `/readyz`, `/livez` and `/status` all get the same `200 OK` and 14-byte body as `/` | Lines 3–4; runtime check |
-| Structured, access or error logging | None. A single `console.log` (line 5). No logging library such as winston, pino, morgan or bunyan | Line 5 |
-| Distributed tracing | None. Request headers are never read, and the server makes no outbound calls | Lines 3–4; Section 5.4.2 |
+| Metrics instrumentation (Prometheus, StatsD, OpenTelemetry, `perf_hooks`) | None. No metrics library, counter or timer. `GET /metrics` returns `Hello, World!\n` | Lines 5–10; runtime check |
+| Health, readiness or liveness endpoints | None. `/health`, `/healthz`, `/ready`, `/readyz`, `/livez` and `/status` all get the same `200 OK` and 14-byte body as `/` | Lines 8–9; runtime check |
+| Structured, access or error logging | None. A single `console.log` (line 10). No logging library such as winston, pino, morgan or bunyan | Line 10 |
+| Distributed tracing | None. Request headers are never read, and the server makes no outbound calls | Lines 8–9; Section 5.4.2 |
 | Alert rules, dashboards, on-call configuration | None. The repository holds no configuration files of any kind | Repository root |
 | Deployment probes (container `HEALTHCHECK`, Kubernetes probes, service units) | None. No Dockerfile, manifests or supervisor configuration | Section 3.6.3 |
 | SLAs, SLOs or KPIs | None defined or instrumented | Sections 1.2.3, 5.4.5 |
-| Runtime diagnostic hooks (`process.on`, server `'error'` listener, `diagnostics_channel`) | None | Lines 1–5 |
+| Runtime diagnostic hooks (`process.on`, server `'error'` listener, `diagnostics_channel`) | None | Lines 5–10 |
 
 **Why it does not apply.** The code is a minimal fixed-response "Hello, World" server (Section 1.2.1). It has no internal state, queues, caches, downstream calls or data, so there is nothing inside it that a metric could usefully track. Its failure modes are few and binary: the process is not running (E-01, E-02, E-07, E-08 in Section 4.3.2), it is running but not responding, or a different process answers on port 3000. An external probe combined with the process exit status detects all three. Monitoring therefore comes down to basic health checking done by the host, in line with assumption AA-05 (Section 5.1.1).
 
-**Basic monitoring practices followed instead.** Status is as built at `f0ba73b` on Node.js v22.23.3:
+**Basic monitoring practices followed instead.** Status is as built in the `0610_02` state at `93f60af` on Node.js v22.23.3:
 
 | Basic Practice | Mechanism | Provided By | Evidence |
 |---|---|---|---|
-| Startup readiness confirmation | Wait for the 41-byte stdout line `Server running at http://127.0.0.1:3000/`, which appeared 25 ms after spawn. The text names `127.0.0.1`, but the bind is `::` (AA-04) | Code (line 5); host watches stdout | Runtime check |
-| Liveness and correctness probe | `GET /` with a `Host` header; expect `200 OK`, `Content-Length: 14` and body `Hello, World!\n`. Any path works | Code (lines 3–4); host prober | Runtime check; Section 6.5.3.1 |
+| Startup readiness confirmation | Wait for the 41-byte stdout line `Server running at http://127.0.0.1:3000/`, which appeared 25 ms after spawn. The text names `127.0.0.1`, but the bind is `::` (AA-04) | Code (line 10); host watches stdout | Runtime check |
+| Liveness and correctness probe | `GET /` with a `Host` header; expect `200 OK`, `Content-Length: 14` and body `Hello, World!\n`. Any path works | Code (lines 8–9); host prober | Runtime check; Section 6.5.3.1 |
 | Process state tracking | Exit status to the parent: `1` startup failure, `130` SIGINT, `143` SIGTERM, `137` SIGKILL. The server never exits on its own | Node.js runtime; host supervisor | Runtime check |
 | Fatal error capture | stderr stays empty in normal operation. Any output there is a fatal startup stack trace (E-01, E-02) | Node.js runtime; host captures the stream | Runtime check |
 | Resource monitoring | CPU, resident memory, threads and sockets of the process, read from the host (`/proc`, `ps` or an agent) | Host | Runtime check; Section 6.5.3.5 |
@@ -3945,7 +3958,7 @@ The system at commit `f0ba73b`, identical on `main` and `0610_02`, is the single
 | Post-failure diagnostics (opt-in) | Launch with `node --report-uncaught-exception` to write a JSON diagnostic report on a fatal exception. No code change needed | Node.js runtime flag set by the launcher | Runtime check (Section 6.5.4.5) |
 | Short-term request debugging (opt-in) | `NODE_DEBUG=http` writes per-connection trace lines to stderr. Node.js warns that this can expose passwords, tokens and authentication headers, so it is not for steady-state use | Node.js runtime environment variable | Runtime check |
 
-**Evidence coverage:** complete. The repository's only file was read in full, and every signal listed here was observed on Node.js v22.23.3 with lodash replaced by an empty stub. Assumption AA-02 (Section 5.1.1) applies to other runtime versions. The sub-sections below give the as-built position for each area this section normally covers. Where the repository is silent, they state the basic practice and the evidence it rests on. They do not propose a full monitoring design.
+**Evidence coverage:** complete. The source file was read in full, together with `README.md`, and every signal listed here was observed on Node.js v22.23.3 with lodash replaced by an empty stub. Assumption AA-02 (Section 5.1.1) applies to other runtime versions. The sub-sections below give the as-built position for each area this section normally covers. Where the repository is silent, they state the basic practice and the evidence it rests on. They do not propose a full monitoring design.
 
 ### 6.5.2 Monitoring Infrastructure (As-Built Position)
 
@@ -3974,7 +3987,7 @@ The process writes to two streams and creates no files:
 
 | Stream | Content | When Written | Format |
 |---|---|---|---|
-| stdout | `Server running at http://127.0.0.1:3000/` (41 bytes) | Once per successful start (line 5) | Plain text. No timestamp, level, PID or instance identifier |
+| stdout | `Server running at http://127.0.0.1:3000/` (41 bytes) | Once per successful start (line 10) | Plain text. No timestamp, level, PID or instance identifier |
 | stderr | Node.js stack trace, for example `Error: Cannot find module 'lodash'` (22 lines) or `Error: listen EADDRINUSE: address already in use :::3000` | Only on fatal startup errors (E-01, E-02) | Node.js default uncaught-exception output |
 | stderr (opt-in) | `HTTP <pid>: SERVER new http connection` and similar lines | Per connection, only when launched with `NODE_DEBUG=http` | Node.js debug text, preceded by a sensitive-data warning |
 | Files | None | Never | — |
@@ -3994,8 +4007,8 @@ No tracing exists, and tracing would add little: the request path has a single h
 
 | Tracing Element | As Built | Evidence |
 |---|---|---|
-| Inbound trace context (`traceparent`, B3 headers) | Ignored. The handler never reads request headers | Lines 3–4 |
-| Span creation | None. No tracer is loaded | Lines 1–5 |
+| Inbound trace context (`traceparent`, B3 headers) | Ignored. The handler never reads request headers | Lines 8–9 |
+| Span creation | None. No tracer is loaded | Lines 5–10 |
 | Outbound propagation | Not applicable. Zero outbound sockets at runtime | Section 6.3 |
 | Correlation IDs in logs | None. There are no request logs to correlate | Section 5.4.2 |
 | Local request tracing | Opt-in `NODE_DEBUG=http` on stderr. Per process, uncorrelated, and may expose credentials | Runtime check |
@@ -4069,9 +4082,9 @@ The diagram shows the three groups involved. The process emits four side-effect 
 ```mermaid
 flowchart LR
     subgraph Proc["Node.js process: server (1).js"]
-        Listener["HTTP listener<br/>:: port 3000, line 5"]
-        Handler["Request Handler, lines 3-4<br/>200 OK, 14-byte body"]
-        Ready["console.log readiness line<br/>line 5, once per start"]
+        Listener["HTTP listener<br/>:: port 3000, line 10"]
+        Handler["Request Handler, lines 8-9<br/>200 OK, 14-byte body"]
+        Ready["console.log readiness line<br/>line 10, once per start"]
         RtErr["Node.js runtime<br/>fatal stack trace on stderr"]
         ExitSt["Exit status<br/>1, 130, 137 or 143"]
         ProcStats["Process resources<br/>CPU, RSS, threads, sockets"]
@@ -4105,7 +4118,7 @@ flowchart LR
 
 ### 6.5.3 Observability Patterns (As-Built Position)
 
-The code implements none of the standard observability patterns. What can be observed comes from the constant behaviour of the Request Handler (lines 3–4), the readiness line (line 5) and Node.js runtime defaults. Measured values come from the verification environment: Node.js v22.23.3 on a 44-core host, with the client on the same host. They are baselines, not commitments.
+The code implements none of the standard observability patterns. What can be observed comes from the constant behaviour of the Request Handler (lines 8–9), the readiness line (line 10) and Node.js runtime defaults. Measured values come from the verification environment: Node.js v22.23.3 on a 44-core host, with the client on the same host. They are baselines, not commitments.
 
 #### 6.5.3.1 Health Checks
 
@@ -4130,7 +4143,7 @@ sequenceDiagram
     autonumber
     participant P as External prober (host)
     participant S as Node.js listener, :: port 3000
-    participant R as Request Handler (lines 3-4)
+    participant R as Request Handler (lines 8-9)
     P->>S: TCP connect
     alt Process not running (E-08)
         S-->>P: Connection refused
@@ -4205,7 +4218,7 @@ The code sets no resource limits and records no usage. Capacity is bounded by th
 | CPU | One core of 44; 100% of it at saturation | One event-loop thread. Other cores stay idle | Process CPU on the host |
 | Memory | 49 MB idle to about 75 MB under saturation | None set in code; Node.js heap defaults | RSS and `VmHWM` on the host |
 | Concurrent connections | Unlimited (`maxConnections` unset, `maxRequestsPerSocket` 0) | Host file-descriptor limit | Socket count under `/proc/<pid>` |
-| Instances per host | 1. A second instance exits with `EADDRINUSE :::3000` while the first keeps serving | Port `3000` is a literal (line 5) | Process count |
+| Instances per host | 1. A second instance exits with `EADDRINUSE :::3000` while the first keeps serving | Port `3000` is a literal (line 10) | Process count |
 | Disk | None. No files are written | — | Not needed |
 | Network per response | 14-byte body plus 4 headers (`Date`, `Connection`, `Keep-Alive`, `Content-Length`) | Host network interface | Host network counters |
 
@@ -4223,7 +4236,7 @@ No threshold is configured anywhere. The conditions below rest on verified invar
 |---|---|---|---|
 | Service unavailable | Probe gets connection refused; any occurrence | Critical | E-08. Only a stopped or crashed process refuses |
 | Unresponsive process | TCP connect succeeds but `GET /` times out | Critical | Verified with SIGSTOP: connect accepted, no HTTP response |
-| Wrong responder | Well-formed `GET /` gets a status other than `200`, or a body other than `Hello, World!\n` (`Content-Length` not 14) | Critical | The handler returns a constant (line 4) |
+| Wrong responder | Well-formed `GET /` gets a status other than `200`, or a body other than `Hello, World!\n` (`Content-Length` not 14) | Critical | The handler returns a constant (line 9) |
 | Startup failure | Exit code `1` with a stack trace on stderr; no readiness line | Critical | E-01, E-02. Deterministic, so a restart does not fix it |
 | Unplanned termination | Exit code `130`, `137` or `143` with no operator action | Critical | E-07. Default signal handling, no graceful drain |
 | Restart loop | Supervisor restarts the process more than once for the same cause | Critical | Usually E-01 or E-02 recurring |
@@ -4283,7 +4296,7 @@ No escalation path is defined. As built, the only responder is whoever launched 
 | 0: automatic | Host supervisor, if one is added (none in the repository) | Process exit or probe failure | Restart. Ineffective for exit `1`, which recurs on every attempt |
 | 1: operator | Person or team running the host | Any Critical alert, a failed restart, or a persistent Warning | Apply the runbook (Section 6.5.4.4) and verify |
 | 2: host or network administrator | Owner of the host, firewall or proxy | Port conflict with another service, host loss, saturation needing more instances | Free port 3000, rebuild the host, or add instances behind a load balancer |
-| 3: repository maintainer | Owner of `server (1).js` | Recovery needs a code change: port literal, lodash line or Node.js compatibility | Edit lines 1 or 5, commit, redeploy |
+| 3: repository maintainer | Owner of `server (1).js` | Recovery needs a code change: port literal, lodash line or Node.js compatibility | Edit line 5 or line 10, commit, redeploy |
 
 #### 6.5.4.4 Runbooks
 
@@ -4291,8 +4304,8 @@ Each runbook maps an alert to its cause in the error catalogue (Section 4.3.2) a
 
 | Runbook | Symptoms | Diagnosis | Recovery |
 |---|---|---|---|
-| RB-01 lodash missing (E-01) | Exit `1`; stderr `Error: Cannot find module 'lodash'`; no readiness line | No `node_modules/lodash` on the resolution path of `server (1).js` | Install `lodash@^4.18.1` (Section 3.3.3) or delete the unused line 1, then relaunch |
-| RB-02 port conflict (E-02) | Exit `1`; stderr `Error: listen EADDRINUSE: address already in use :::3000` | Another process holds port 3000; find it with the host's socket tools | Stop the other process, or change the literal port and the log text on line 5 together, then relaunch |
+| RB-01 lodash missing (E-01) | Exit `1`; stderr `Error: Cannot find module 'lodash'`; no readiness line | No `node_modules/lodash` on the resolution path of `server (1).js` | Install `lodash@^4.18.1` (Section 3.3.3) or delete the unused line 5, then relaunch |
+| RB-02 port conflict (E-02) | Exit `1`; stderr `Error: listen EADDRINUSE: address already in use :::3000` | Another process holds port 3000; find it with the host's socket tools | Stop the other process, or change the literal port and the log text on line 10 together, then relaunch |
 | RB-03 process terminated (E-07, E-08) | Probes refused; exit `130`, `137` or `143` recorded | Check the supervisor or shell history for who sent the signal | Relaunch `node "server (1).js"` |
 | RB-04 unresponsive process | TCP connect succeeds; `GET /` times out | Check process state (`T` means stopped) and CPU (100% of one core means saturation) | Send SIGCONT if stopped; shed load at the proxy if saturated; otherwise restart |
 | RB-05 wrong responder | Probe status or body does not match | A different process answers on port 3000 | Stop that process; relaunch this server; confirm the body |
@@ -4316,7 +4329,7 @@ No post-mortem process, template or incident log exists. The evidence available 
 | Start time | The readiness line has no timestamp | Only as the collector's receipt time |
 | Request history | No. No access log | Proxy logs, if a proxy exists |
 | Diagnostic report | Opt-in. With `--report-uncaught-exception`, the E-01 failure wrote a JSON report with sections `header`, `javascriptStack`, `javascriptHeap`, `nativeStack`, `resourceUsage`, `libuv` and `workers` | The report directory on the host |
-| Code version | Git commit `f0ba73b` | Git remote. The readiness line does not state the version, so deployment records must link incidents to commits |
+| Code version | Git: nine commits. The requirement baseline v1.0 is `f0ba73b`; the current head is `93f60af` | Git remote. The readiness line does not state the version, so deployment records must link incidents to commits |
 
 The basic practice is to record, for each incident, the timeline from prober and supervisor records, the cause mapped to an E-xx code, the runbook used and any follow-up change. A follow-up change is then tracked as in Section 6.5.4.6.
 
@@ -4328,9 +4341,9 @@ The repository has no issue-tracker configuration, CI pipeline or tests (C-006),
 |---|---|---|---|
 | No supervisor or probe definition | Failures are detected only when someone notices; no automatic restart | Host service unit or container health check using `GET /` | Section 3.6.3 |
 | Startup failures surface only at run time | A clean checkout fails with E-01 on first launch | CI smoke test: launch, wait for the readiness line, expect `200` with the 14-byte body | C-006 |
-| Unpinned lodash and Node.js | E-01 on new hosts; runtime defaults may drift (AA-02) | `package.json` with `engines` and a lockfile, or delete line 1 | C-002, C-003 |
-| Readiness line has no timestamp, PID or version | Collectors must add context; instances cannot be told apart | Extend the log text on line 5 | Section 6.5.2.2 |
-| Readiness URL disagrees with the bind | The log suggests loopback-only exposure while the listener is on `::` | Align the text or the bind host on line 5 | AA-04 |
+| Unpinned lodash and Node.js | E-01 on new hosts; runtime defaults may drift (AA-02) | `package.json` with `engines` and a lockfile, or delete line 5 | C-002, C-003 |
+| Readiness line has no timestamp, PID or version | Collectors must add context; instances cannot be told apart | Extend the log text on line 10 | Section 6.5.2.2 |
+| Readiness URL disagrees with the bind | The log suggests loopback-only exposure while the listener is on `::` | Align the text or the bind host on line 10 | AA-04 |
 | No access or rejection logging | No request rate, status mix or latency from the server | Access logging at a reverse proxy | Sections 5.4.2, 6.4.6.3 |
 | No shutdown log or `'error'` listener | Stops and crashes appear only as exit codes | Supervisor records exit codes; or add handlers in code | Section 5.4.3 |
 
@@ -4338,8 +4351,10 @@ The repository has no issue-tracker configuration, CI pipeline or tests (C-006),
 
 **Repository files and folders**
 
-- `server (1).js` - The whole system and every monitoring signal it produces. Line 1 loads lodash; a missing copy causes the E-01 startup failure (exit `1`, 22-line stderr trace). Lines 3–4 are the catch-all handler that returns `200 OK` with the 14-byte constant on every path, which makes `GET /` the liveness probe. Line 5 binds port 3000 on `::` and writes the single 41-byte readiness line, the code's only `console.log`. The file has no metrics, health routes, logging library, tracing, `process.on` handlers, `'error'` listener or diagnostic hooks. It was the subject of this section's runtime checks: health-style paths and `/metrics` returned the greeting; stdout and stderr stayed unchanged under load and rejections; latency percentiles and RSS were measured; exit codes `1`, `130`, `137` and `143` were confirmed; a second instance failed with `EADDRINUSE`; SIGSTOP showed that TCP connect still succeeds while HTTP stalls; and the opt-in `NODE_DEBUG=http` output and `--report-uncaught-exception` report were captured.
-- `` (repository root) - Contains only `server (1).js` on every branch and remote ref (`main`, `0610_02`, `origin/main`, `origin/0610_02`) at the single commit `f0ba73b`. There are no monitoring configurations, alert rules, dashboards, container health checks, orchestration probes, supervisor units or CI pipelines.
+- `server (1).js` - The whole system and every monitoring signal it produces, ten lines in the `0610_02` state at `93f60af`. Line 5 loads lodash; a missing copy causes the E-01 startup failure (exit `1`, 22-line stderr trace). Lines 8–9 are the catch-all handler that returns `200 OK` with the 14-byte constant on every path, which makes `GET /` the liveness probe. Line 10 binds port 3000 on `::` and writes the single 41-byte readiness line, the code's only `console.log`. Four JSDoc comments (lines 1-3 and line 7) add no behavior. The file has no metrics, health routes, logging library, tracing, `process.on` handlers, `'error'` listener or diagnostic hooks. It was the subject of this section's runtime checks: health-style paths and `/metrics` returned the greeting; stdout and stderr stayed unchanged under load and rejections; latency percentiles and RSS were measured; exit codes `1`, `130`, `137` and `143` were confirmed; a second instance failed with `EADDRINUSE`; SIGSTOP showed that TCP connect still succeeds while HTTP stalls; and the opt-in `NODE_DEBUG=http` output and `--report-uncaught-exception` report were captured.
+- `README.md` - Project name, install step and run step; it carries no monitoring or logging configuration.
+- `blitzy/documentation/Technical Specifications.md` - The tracked copy of this specification, present on `0610_02`.
+- \`\` (repository root) - Holds `server (1).js`, `README.md` and the `blitzy/` documentation folder on `0610_02` and `origin/0610_02` at `93f60af`; `main` and `origin/main` at `f0ba73b` hold only `server (1).js`. There are no monitoring configurations, alert rules, dashboards, container health checks, orchestration probes, supervisor units or CI pipelines.
 
 **Technical Specification cross-references**
 
@@ -4368,7 +4383,7 @@ The repository has no issue-tracker configuration, CI pipeline or tests (C-006),
 
 **Detailed Testing Strategy is not applicable for this system.**
 
-The repository holds one 5-line script, `server (1).js`, on every branch (`main`, `0610_02`, single commit `f0ba73b`). It has no tests and no test tooling. Each of its 18 requirements has been verified only by hand (Section 2.5.1, constraint C-006).
+The repository holds one ten-line script, `server (1).js`, four of whose lines are JSDoc comments, plus `README.md`. Both are in the `0610_02` state at `93f60af`; `main` and `origin/main` remain at `f0ba73b` with the earlier five-line script. It has no tests and no test tooling. Each of its 18 requirements has been verified only by hand (Section 2.5.1, constraint C-006).
 
 | Indicator | Observed in Repository | Evidence |
 |---|---|---|
@@ -4377,12 +4392,12 @@ The repository holds one 5-line script, `server (1).js`, on every branch (`main`
 | Package manifest and `test` script | None (no `package.json` or lockfile) | Section 3.6.1 |
 | CI pipeline | None (no `.github/workflows/` or other CI files) | Section 3.6.4 |
 | Lint or static-analysis config | None | Section 3.6.1 |
-| Units of code under test | Two anonymous arrow callbacks (lines 3–4 and line 5). No exports and no named functions | `server (1).js` |
+| Units of code under test | Two anonymous arrow callbacks (lines 8–9 and line 10). No exports and no named functions | `server (1).js` |
 | Data stores, external services, UI | None | Sections 6.2, 6.3, 5.1.4 |
 
 #### Why a Detailed Strategy Does Not Apply
 
-- **No logic to partition.** The request handler ignores `req` and makes one `res.end('Hello, World!\n')` call. It has no branches, validation or I/O. The line 5 callback prints a single constant line.
+- **No logic to partition.** The request handler ignores `req` and makes one `res.end('Hello, World!\n')` call. It has no branches, validation or I/O. The line 10 callback prints a single constant line.
 - **No integration surface.** There is no database (Section 6.2), no outbound call or message queue (Section 6.3), and no third-party service (Section 3.4). Database integration tests, contract tests and service virtualisation would have nothing to exercise.
 - **No user interface.** The response is 14 bytes of plain text and carries no `Content-Type`. There are no pages, so UI automation and cross-browser testing do not apply.
 - **No configuration matrix.** Port `3000` is a literal and the script reads no environment variables (constraint C-001), so there are no configuration variants to test.
@@ -4396,7 +4411,7 @@ A basic testing approach is enough. It has two tiers on Node.js's built-in `node
 
 Every command, test pattern and measurement in Section 6.6 comes from a prototype run on Node.js v22.23.3 in a scratch directory outside the repository. The prototype has 24 tests and passed 24/24 on 20 consecutive serial runs. **None of these artifacts are committed.** Sections 6.6.2 to 6.6.5 describe what they would add.
 
-**Evidence coverage: complete.** The repository holds one source file, and all of its lines were inspected and exercised.
+**Evidence coverage: complete.** The repository holds one source file plus `README.md`, and all ten lines of the script were inspected and exercised.
 
 ### 6.6.2 Basic Unit Testing Approach
 
@@ -4414,7 +4429,7 @@ The toolchain uses only what ships with Node.js, plus one lint tool. This matche
 | Built-in reporters | `spec`, `tap`, `dot`, `junit`, `lcov` | Console output, CI test reports and coverage export |
 | ESLint with `@eslint/js` and `globals` | ESLint 9.39.5 | Static check (`no-unused-vars`) for F-005-RQ-003 |
 | npm (`npm ci`, `npm audit`) | npm 11.18.0 | Installs `lodash` from a lockfile and audits it |
-| `lodash` | 4.18.1 (range `^4.18.1`) | Runtime dependency. Line 1 must resolve it before any test can load the file |
+| `lodash` | 4.18.1 (range `^4.18.1`) | Runtime dependency. Line 5 must resolve it before any test can load the file |
 
 Prerequisite: the repository has no `package.json`. The test tooling needs one that declares `engines` `>=22`, the `lodash` dependency and the test scripts. The prototype manifest installed `lodash` 4.18.1 from `https://registry.npmjs.org/` with a `sha512` integrity hash, and `npm audit --omit=dev` reported 0 vulnerabilities. The `^4.18.1` floor follows Section 3.3.4.
 
@@ -4445,7 +4460,7 @@ Discovery rules verified on Node.js v22.23.3:
 
 #### 6.6.2.3 Mocking Strategy
 
-Two features of the source make it mockable without code changes. Line 3 looks up `createServer` on the `http` module object at call time. Line 5 reaches `console.log` the same way.
+Two features of the source make it mockable without code changes. Line 8 looks up `createServer` on the `http` module object at call time. Line 10 reaches `console.log` the same way.
 
 | Collaborator | Test Double | Reason |
 |---|---|---|
@@ -4468,7 +4483,7 @@ Two features of the source make it mockable without code changes. Line 3 looks u
 | Branches (V8 block counters) | 100% (3 of 3) | 100% |
 | Functions | 100% (2 of 2 arrow callbacks) | 100% |
 
-- **The gate is enforced by the runner.** A deliberately partial test, which loaded the file without calling either callback, produced `80.00% line coverage does not meet threshold of 100%` and `0.00% function coverage does not meet threshold of 100%`. Line 4 was uncovered and the process exited with code 1.
+- **The gate is enforced by the runner.** A deliberately partial test, which loaded the file without calling either callback, produced `80.00% line coverage does not meet threshold of 100%` and `0.00% function coverage does not meet threshold of 100%`. Line 9 was uncovered and the process exited with code 1.
 - **Coverage comes from the unit tier only.** Servers spawned by the black-box tier are stopped with SIGTERM and do not flush V8 coverage data. A black-box-only run reported 80% lines and 0% functions even though every test passed.
 - **Scope.** `--test-coverage-include="server (1).js"` keeps test files and `node_modules` out of the report.
 
@@ -4493,7 +4508,7 @@ All test data are constants declared inside the test files. There are no fixture
 | Raw payloads | `GARBAGE`, CL+TE smuggling attempt, request with no `Host` | `400` checks (E-03, Section 6.6.3.8) |
 | Clean checkout | Copy of the script in an `fs.mkdtempSync` directory under `os.tmpdir()` | `MODULE_NOT_FOUND` check (E-01) |
 
-The expected constants deliberately repeat the literals on lines 4 and 5. Any edit to those lines then fails the suite and prompts the version-table update that Section 2.6.3 requires.
+The expected constants deliberately repeat the literals on lines 9 and 10. Any edit to those lines then fails the suite and prompts the version-table update that Section 2.6.3 requires.
 
 #### 6.6.2.7 Example Test Patterns
 
@@ -4546,7 +4561,7 @@ node --test --experimental-test-coverage --test-coverage-include="server (1).js"
 | F-004-RQ-003 | Unit, black-box | both | No extra log call; stdout and stderr unchanged after requests |
 | F-005-RQ-001 | Black-box | `helpers.js` (`startServer`) | Readiness line appears when `lodash` is installed |
 | F-005-RQ-002 | Black-box | `lifecycle.int.test.js` | Clean copy exits 1; stderr contains `Cannot find module 'lodash'` |
-| F-005-RQ-003 | Static | `eslint.config.js` | `no-unused-vars` reports `'_'` at line 1, column 7 |
+| F-005-RQ-003 | Static | `eslint.config.js` | `no-unused-vars` reports `'_'` at line 5, column 7 |
 
 The F-005-RQ-003 check fails against the code as built: ESLint exits 1 because the binding is unused, which is exactly the behaviour the requirement describes. Section 6.6.5.4 covers how the gate treats this finding.
 
@@ -4596,7 +4611,7 @@ Not in the default suite:
 | Need | Requirement | Reason |
 |---|---|---|
 | Runtime | Node.js 22.x (`engines` `>=22`) | Parser limits and timeouts are runtime defaults, verified only on v22.23.3 (assumption A-002, constraint C-003) |
-| Dependency | `lodash` installed through `npm ci` | Line 1 fails without it (E-01) |
+| Dependency | `lodash` installed through `npm ci`, as `README.md` documents for manual runs | Line 5 fails without it (E-01) |
 | Network | TCP port 3000 free on `::` and loopback | The port is a literal (C-001). If it is taken, every `startServer` call rejects with exit 1 |
 | Scheduling | Black-box files run serially (`--test-concurrency=1`) | Only one listener can hold port 3000 (Section 6.6.4.3) |
 | Scratch space | Writable `os.tmpdir()` | Clean-checkout copy for E-01; removed in `finally` |
@@ -4740,7 +4755,7 @@ Policy: no automatic retries. A retry would hide port conflicts, which are the m
 
 ### 6.6.5 Quality Metrics
 
-The repository defines no quality metrics, thresholds or gates (constraint C-006). The targets below are sized to a 5-line, deterministic script. Each one was met or measured in the prototype unless the table says otherwise.
+The repository defines no quality metrics, thresholds or gates (constraint C-006). The targets below are sized to a ten-line, deterministic script. Each one was met or measured in the prototype unless the table says otherwise.
 
 #### 6.6.5.1 Code Coverage Targets
 
@@ -4778,8 +4793,8 @@ These thresholds catch regressions. They are not service levels; no SLA or SLO i
 
 | Gate | Pass Criterion | Result Against Current Code |
 |---|---|---|
-| G1 Install | `npm ci` exits 0 | **Cannot run.** There is no `package.json` or lockfile. A clean checkout fails at line 1 (E-01) |
-| G2 Static analysis | `npx eslint .` reports 0 errors | **Fails.** `'_' is assigned a value but never used` at line 1, column 7. The test files lint clean |
+| G1 Install | `npm ci` exits 0 | **Cannot run.** There is no `package.json` or lockfile, so `npm ci` has nothing to install. A clean checkout fails at line 5 (E-01) |
+| G2 Static analysis | `npx eslint .` reports 0 errors | **Fails.** `'_' is assigned a value but never used` at line 5, column 7. The test files lint clean |
 | G3 Dependency audit | `npm audit --omit=dev` exits 0 | **Passes** with `lodash` 4.18.1. Fails with 4.17.21 (1 high, exit 1). Unpinned hosts are not covered (C-002) |
 | G4 Unit coverage | 100% lines, branches and functions | **Passes** in the prototype |
 | G5 Black-box suite | 100% pass, run serially | **Passes**, 24 of 24 (unit and black-box tiers together) |
@@ -4787,8 +4802,8 @@ These thresholds catch regressions. They are not service levels; no SLA or SLO i
 
 G2 can be cleared in two ways. Both were checked, and the choice is up to the project owner:
 
-1. **Delete line 1.** No other line uses it (F-005-RQ-003). This also removes failure mode E-01 and the need for `lodash` (Section 4.3.2, recovery step 1). F-005 would need a new row in Section 2.6.3, and the `MODULE_NOT_FOUND` tests would be dropped.
-2. **Keep line 1 as built.** Configure `'no-unused-vars': ['error', { varsIgnorePattern: '^_$' }]` in `eslint.config.js`. ESLint then exits 0 with no source change.
+1. **Delete line 5.** No other line uses it (F-005-RQ-003). This also removes failure mode E-01 and the need for `lodash` (Section 4.3.2, recovery step 1). F-005 would need a new row in Section 2.6.3, and the `MODULE_NOT_FOUND` tests would be dropped.
+2. **Keep line 5 as built.** Configure `'no-unused-vars': ['error', { varsIgnorePattern: '^_$' }]` in `eslint.config.js`. ESLint then exits 0 with no source change.
 
 G1 needs the `package.json` and lockfile prerequisite from Section 6.6.2.1. Section 3.6.6 lists both as tooling gaps.
 
@@ -4796,7 +4811,7 @@ G1 needs the `package.json` and lockfile prerequisite from Section 6.6.2.1. Sect
 
 - **Traceability.** Every test title starts with its requirement or error IDs (Section 6.6.2.5). Once tests exist, the "Verification and Result" column of Section 2.5.1 changes from manual runtime checks to the test file names in Section 6.6.2.8.
 - **Change control.** A behaviour change to `server (1).js` updates three things in the same commit: the test constants, a new row in Section 2.6.3, and the affected rows of Sections 2.2 and 2.5.
-- **Runbook for contributors.** The repository has no README. One should list `npm ci`, `npm test`, the free port 3000 requirement, and the need to quote the file name on the command line (C-005).
+- **Runbook for contributors.** `README.md` records only the project name, the install step `npm install lodash` and the run step; it lists neither `npm ci` nor the test commands. It should be extended with those, the free port 3000 requirement, and the need to quote the file name on the command line (C-005).
 - **Quarantine records.** Every `skip` or `todo` gives a reason and a requirement ID.
 - **Report retention.** `junit.xml` and `lcov.info` are kept as CI artifacts for each run.
 
@@ -4829,7 +4844,7 @@ flowchart TD
     InstallOk -- "Yes" --> Lint["G2 npx eslint ."]
     Lint --> Audit["G3 npm audit --omit=dev"]
     Audit --> StaticOk{"G2 and G3<br/>pass?"}
-    StaticOk -- "No" --> FailStatic["Fail: static or audit gate<br/>as built, ESLint flags unused _ on line 1"]
+    StaticOk -- "No" --> FailStatic["Fail: static or audit gate<br/>as built, ESLint flags unused _ on line 5"]
     StaticOk -- "Yes" --> Unit["Unit tier, parallel-safe<br/>mocked http.createServer and console.log"]
     Unit --> Cov{"G4 coverage 100%<br/>lines, branches, functions?"}
     Cov -- "No" --> FailCov["Fail: coverage gate"]
@@ -4931,8 +4946,10 @@ flowchart TB
 
 #### Repository Files and Folders
 
-- `server (1).js` - The only source file (lines 1–5). Gave the test seams: `require('lodash')` on line 1; `require('http').createServer` looked up at call time on line 3; the constant `res.end('Hello, World!\n')` on line 4; the literal `listen(3000, …)` and its `console.log` readiness line on line 5; no exports. Every expected constant in the tests comes from these lines.
-- `` (repository root) - Holds only `server (1).js` on every branch (`main`, `0610_02`, single commit `f0ba73b`). It has no test files, test runner config, `package.json`, lockfile, lint config or CI workflows. The `origin` remote is hosted on `github.com`.
+- `server (1).js` - The only source file, ten lines in the `0610_02` state at `93f60af` (lines 5–10 execute; lines 1-3 and line 7 are JSDoc comments). Gave the test seams: `require('lodash')` on line 5; `require('http').createServer` looked up at call time on line 8; the constant `res.end('Hello, World!\n')` on line 9; the literal `listen(3000, …)` and its `console.log` readiness line on line 10; no exports. Every expected constant in the tests comes from these lines.
+- `README.md` - Project name, install step `npm install lodash` and run step. It lists no test or lint commands.
+- `blitzy/documentation/Technical Specifications.md` - The tracked copy of this specification, present on `0610_02`.
+- \`\` (repository root) - Holds `server (1).js`, `README.md` and the `blitzy/` documentation folder on `0610_02` and `origin/0610_02` at `93f60af`; `main` and `origin/main` at `f0ba73b` hold only the earlier `server (1).js`. It has no test files, test runner config, `package.json`, lockfile, lint config or CI workflows. The `origin` remote is hosted on `github.com`.
 
 #### Technical Specification Cross-References
 
@@ -4963,18 +4980,18 @@ flowchart TB
 
 **No user interface required**
 
-The repository at commit `f0ba73b` (identical on `main` and `0610_02`) is the single file `server (1).js`: a plaintext HTTP service that answers every request with a fixed string. It has no screens, pages, templates, stylesheets, client-side scripts or interactive console. The UI topics this section would otherwise cover (core UI technologies, use cases, UI/backend boundaries, UI schemas, screens, user interactions, visual design) have nothing to document.
+In the `0610_02` state at `93f60af`, the repository holds the single source file `server (1).js` — ten lines, four of them JSDoc comments — plus `README.md`: a plaintext HTTP service that answers every request with a fixed string. It has no screens, pages, templates, stylesheets, client-side scripts or interactive console. The UI topics this section would otherwise cover (core UI technologies, use cases, UI/backend boundaries, UI schemas, screens, user interactions, visual design) have nothing to document.
 
 **Basis for the note**
 
 | UI Indicator | Observed in Repository | Evidence |
 |---|---|---|
-| Frontend source files (HTML, CSS, JSX/TSX, Vue, Svelte) or images | None in any branch or commit | Repository root; all refs contain only `server (1).js` |
-| Templates or view engine (EJS, Pug, Handlebars) | None. The only `require` calls load `lodash` and `http` | `server (1).js` lines 1, 3 |
+| Frontend source files (HTML, CSS, JSX/TSX, Vue, Svelte) or images | None in any branch or commit | Repository root; the refs contain only `server (1).js`, `README.md` and the tracked specification |
+| Templates or view engine (EJS, Pug, Handlebars) | None. The only `require` calls load `lodash` and `http` | `server (1).js` lines 5, 8 |
 | Frontend framework or package manifest | None; there is no `package.json` | Repository root; Section 5.1.1 ("No framework") |
-| Static asset serving | None. `/index.html`, `/style.css`, `/favicon.ico` and `/app.js` each return the same 14-byte greeting | `server (1).js` line 4; runtime check on Node.js v22.23.3 |
-| Response media type | No `Content-Type`, `setHeader` or `writeHead`; the body carries no markup | `server (1).js` line 4; Section 1.3.2 |
-| Interactive terminal input | None. No stdin, `readline` or prompt handling | `server (1).js` lines 1–5 |
+| Static asset serving | None. `/index.html`, `/style.css`, `/favicon.ico` and `/app.js` each return the same 14-byte greeting | `server (1).js` line 9; runtime check on Node.js v22.23.3 |
+| Response media type | No `Content-Type`, `setHeader` or `writeHead`; the body carries no markup | `server (1).js` line 9; Section 1.3.2 |
+| Interactive terminal input | None. No stdin, `readline` or prompt handling | `server (1).js` lines 5–10 |
 
 **Human-facing outputs that are not a UI**
 
@@ -4985,16 +5002,18 @@ HTTP response (any method, any path): 200 OK, body "Hello, World!\n", no Content
 stdout at startup:                    Server running at http://127.0.0.1:3000/
 ```
 
-A browser pointed at port 3000 gets only that text. The two user groups in Section 1.3.1.2 work without a UI. Anonymous HTTP clients use the protocol interface described in Sections 5.1.1 and 6.3. Operators start and stop the process from a shell (Section 1.3.1.1).
+A browser pointed at port 3000 gets only that text. The two user groups in Section 1.3.1.2 work without a UI. Anonymous HTTP clients use the protocol interface described in Sections 5.1.1 and 6.3. Operators start and stop the process from a shell (Section 1.3.1.1), following the install and run steps in `README.md`.
 
-**Evidence coverage:** complete. The whole of `server (1).js` was read, and every local and remote branch was checked for frontend artefacts.
+**Evidence coverage:** complete. The whole of `server (1).js` and `README.md` were read, and every local and remote branch was checked for frontend artefacts.
 
 ## 7.2 References
 
 **Repository files and folders**
 
-- `server (1).js` - Entire system (lines 1–5). Line 1 loads lodash, line 3 creates the HTTP server, line 4 returns the fixed `Hello, World!\n` body without a `Content-Type`, and line 5 binds port 3000 and logs the readiness line. No markup, templates, styles, static assets or stdin handling exist.
-- `` (repository root) `/` - Holds only `server (1).js` at commit `f0ba73b` on every local and remote branch. No frontend folders (`public/`, `static/`, `views/`, `templates/`), no frontend files and no `package.json`.
+- `server (1).js` - Entire system (lines 5–10 execute; lines 1-3 and line 7 are JSDoc comments). Line 5 loads lodash, line 8 creates the HTTP server, line 9 returns the fixed `Hello, World!\n` body without a `Content-Type`, and line 10 binds port 3000 and logs the readiness line. No markup, templates, styles, static assets or stdin handling exist.
+- `README.md` - Project name, install step and run step in plain Markdown. It defines no frontend asset or layout.
+- `blitzy/documentation/Technical Specifications.md` - The tracked copy of this specification, present on `0610_02`.
+- `` (repository root) `/` - Holds `server (1).js`, `README.md` and the `blitzy/` documentation folder on `0610_02` and `origin/0610_02` at `93f60af`; `main` and `origin/main` at `f0ba73b` hold only `server (1).js`. No frontend folders (`public/`, `static/`, `views/`, `templates/`), no frontend files and no `package.json`.
 
 **Technical Specification cross-references**
 
@@ -5008,31 +5027,31 @@ A browser pointed at port 3000 gets only that text. The two user groups in Secti
 
 - None used.
 
-# 8. Infrastructure
+##### 8. Infrastructure update
 
 ## 8.1 Applicability Statement
 
 **Detailed Infrastructure Architecture is not applicable for this system.**
 
-The repository holds one 5-line Node.js script, `server (1).js`, on every branch (`main`, `0610_02`, single commit `f0ba73b`). It has no deployment, packaging, provisioning or delivery artifacts of any kind. The script is a standalone process. It runs wherever an operator starts it with a Node.js runtime, and it listens on TCP port 3000.
+The repository holds one ten-line Node.js script, `server (1).js` (four of its lines are JSDoc comments), plus `README.md`, on `0610_02` at `93f60af`; `main` and `origin/main` remain at `f0ba73b`. It has no deployment, packaging, provisioning or delivery artifacts of any kind. The script is a standalone process. It runs wherever an operator starts it with a Node.js runtime, and it listens on TCP port 3000.
 
 | Indicator | Observed in Repository | Evidence |
-|---|---|---|
+| --- | --- | --- |
 | Infrastructure as Code | None (no Terraform, CloudFormation, Pulumi or Ansible files) | Repository root listing |
-| Container definitions | None (no `Dockerfile`, `.dockerignore` or Compose file) | Section 3.6.3 |
+| Container definitions | None (no Dockerfile, .dockerignore or Compose file) | Section 3.6.3 |
 | Orchestration manifests | None (no Kubernetes, Helm or Nomad files) | Repository root listing |
-| CI/CD configuration | None (no `.github/workflows/` or other CI files) | Section 3.6.4 |
-| Package manifest or lockfile | None (no `package.json`, `package-lock.json`, `.nvmrc`) | Section 3.6.1 |
-| Runtime configuration | None. Port `3000` is a literal on line 5. Setting `PORT=8080`, `HOST=127.0.0.1` and `NODE_ENV=production` changed nothing: port 3000 still answered `200` and 8080 refused connections | `server (1).js` line 5 |
-| Cloud SDKs or service clients | None. The only `require` calls are `lodash` (line 1) and the built-in `http` (line 3) | `server (1).js` |
+| CI/CD configuration | None (no .github/workflows/ or other CI files) | Section 3.6.4 |
+| Package manifest or lockfile | None (no package.json, package-lock.json, .nvmrc) | Section 3.6.1 |
+| Runtime configuration | None. Port 3000 is a literal on line 10. Setting PORT=8080, HOST=127.0.0.1 and NODE_ENV=production changed nothing: port 3000 still answered 200 and 8080 refused connections | server (1).js line 10 |
+| Cloud SDKs or service clients | None. The only require calls are lodash (line 5) and the built-in http (line 8) | server (1).js |
 | Stateful resources | None (no database, volume, cache or queue) | Section 6.2 |
 | Environment definitions | None (no dev, staging or production settings) | Repository root listing |
-| Releases | No Git tags. History is one commit, "Add files via upload" | Git history |
+| Releases | No Git tags. History is nine commits, from "Add files via upload" (`f0ba73b`, still the head of `main`) to the merge `93f60af` | Git history |
 
 #### Why It Does Not Apply
 
 - **There is no topology to deploy.** The system is one process with one event-loop thread and one listener (Section 5.3.7, ADR-003). It has no tiers, services or data stores to place on infrastructure.
-- **A host needs only three things.** A Node.js runtime, `lodash` on the module resolution path, and a free TCP port 3000 (Section 3.6.3).
+- **A host needs only three things.** A Node.js runtime, `lodash` on the module resolution path (as `README.md` documents with `npm install lodash`), and a free TCP port 3000 (Section 3.6.3).
 - **Environments cannot differ.** The script reads no environment variables or configuration files. A development, staging and production instance would run byte-identical code with identical behaviour.
 - **There is no state.** No data is created, so there is nothing to back up, replicate or migrate (Section 6.2). Recovery means relaunching the process (Section 5.4.6).
 - **Platform concerns sit with the host.** TLS, network access control, process supervision, log retention and load balancing are not defined in the repository. Whatever host runs the script must supply them (Section 5.1.1, AA-05).
@@ -5040,7 +5059,7 @@ The repository holds one 5-line Node.js script, `server (1).js`, on every branch
 #### What This Section Documents Instead
 
 | Sub-Section | Content |
-|---|---|
+| --- | --- |
 | 8.2 Infrastructure Area Status | Each infrastructure area of a full specification, and why it is not used |
 | 8.3 Minimal Build Requirements | Build environment, dependency management, artifacts and quality gates |
 | 8.4 Minimal Distribution and Deployment Requirements | Distribution channel, deployment workflow, environment promotion, rollback, validation and release management |
@@ -5049,7 +5068,7 @@ The repository holds one 5-line Node.js script, `server (1).js`, on every branch
 
 Commands and measurements in this section come from verification runs on Node.js v22.23.3 and npm 11.18.0 (Ubuntu 24.04.5 LTS, Linux x86_64), in scratch directories outside the repository. Artifacts used there, such as a prototype `package.json`, are **not** committed. They are labelled "prototype" wherever they appear.
 
-**Evidence coverage: complete.** The repository holds one source file. All of its lines and all Git refs were inspected.
+**Evidence coverage: complete.** The repository holds one source file plus `README.md`. All ten lines of the script and all Git refs were inspected.
 
 ## 8.2 Infrastructure Area Status
 
@@ -5058,11 +5077,11 @@ This sub-section goes through each area a full infrastructure specification woul
 ### 8.2.1 Status Summary
 
 | Area | As Built | Why Not Used | Minimum the Host Must Provide |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Deployment environment | Not declared; any host with Node.js | One process with no topology (Section 8.1) | A POSIX host with Node.js 22.x (Section 8.5.1) |
 | Infrastructure as Code | None | Nothing to provision except a runtime | Manual setup or the host's own tooling |
 | Configuration management | None. Literal port, no environment variables | Behaviour cannot be configured | Port 3000 kept free for the process |
-| Environment promotion | None. `main` and `0610_02` point to the same commit | Environments cannot differ | Promotion by commit SHA (Section 8.4.3) |
+| Environment promotion | None. `main` is at `f0ba73b`; `0610_02` is at `93f60af` | Environments cannot differ | Promotion by commit SHA (Section 8.4.3) |
 | Cloud services | None | No cloud SDK, managed service or outbound call | Optional: one small VM (Section 8.5.4) |
 | Containerization | None | No image definition | Optional (Section 8.2.4) |
 | Orchestration | None | One instance per host; nothing to schedule | None |
@@ -5075,7 +5094,7 @@ This sub-section goes through each area a full infrastructure specification woul
 #### 8.2.2.1 Target Environment Assessment
 
 | Aspect | Position | Evidence |
-|---|---|---|
+| --- | --- | --- |
 | Environment type | Host-agnostic. The repository targets no on-premises, cloud, hybrid or multi-cloud environment. It runs on any machine that has a Node.js runtime | No infrastructure files (Section 8.1) |
 | Geographic distribution | None. One instance per host, with no multi-region, CDN or data-residency requirement. The process stores no data | Sections 5.4.5 and 6.2 |
 | Resource requirements | One CPU core, under 100 MB resident memory, about 1.4 MB of installed dependencies, and inbound TCP port 3000 | Section 8.5.2 |
@@ -5084,9 +5103,9 @@ This sub-section goes through each area a full infrastructure specification woul
 #### 8.2.2.2 Environment Management
 
 | Concern | Position |
-|---|---|
+| --- | --- |
 | Infrastructure as Code | None. Host, network and firewall setup are outside the repository (Section 3.6.3) |
-| Configuration management | None. The port and the readiness text are literals on line 5. Changing the port is a source edit that must update both together (Section 5.4.6, constraint C-001) |
+| Configuration management | None. The port and the readiness text are literals on line 10. Changing the port is a source edit that must update both together (Section 5.4.6, constraint C-001) |
 | Environment promotion | None defined. Section 8.4.3 gives a minimal SHA-based promotion path |
 | Backup and disaster recovery | Source on the Git remote is the only asset (Section 8.6.3) |
 
@@ -5103,11 +5122,11 @@ A cloud virtual machine is one valid host among many. Section 8.5.4 gives instan
 If an image is added later, the repository's behaviour sets these requirements:
 
 | Requirement | Reason |
-|---|---|
+| --- | --- |
 | Pin the Node.js base image to the 22.x line | Runtime defaults were verified only on v22.23.3 (assumption A-002) |
-| Install `lodash` `^4.18.1` from a lockfile, or delete line 1 | Line 1 fails with `MODULE_NOT_FOUND` otherwise (E-01) |
-| Publish container port 3000 | The port is a literal. The process binds `::`, so the published port works without code changes |
-| Run as a non-root user | Verified: the process serves normally as the unprivileged `nobody` user, since port 3000 needs no privilege |
+| Install lodash ^4.18.1 from a lockfile, or delete line 5 | Line 5 fails with MODULE_NOT_FOUND otherwise (E-01) |
+| Publish container port 3000 | The port is a literal. The process binds ::, so the published port works without code changes |
+| Run as a non-root user | Verified: the process serves normally as the unprivileged nobody user, since port 3000 needs no privilege |
 | No volumes | The process writes no files (Section 6.2) |
 
 ### 8.2.5 Orchestration
@@ -5125,22 +5144,22 @@ The script runs unchanged, with no transpilation, bundling or asset pipeline. Th
 ### 8.3.1 Build Environment Requirements
 
 | Requirement | Minimum | Verified With | Notes |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Operating system | A POSIX host | Ubuntu 24.04.5 LTS, Linux x86_64 | Signal and exit-code behaviour was checked on Linux only |
 | Runtime | Node.js 22.x LTS | v22.23.3 | Not pinned by the repository (constraint C-003). The 22.x line is in maintenance LTS until 2027-04-30 |
-| Package manager | npm | npm 11.18.0. Node.js v22.23.3 itself ships npm 10.9.9 | Needed only to install `lodash` |
-| Network at install time | HTTPS to `registry.npmjs.org` | `lodash` 4.18.1 tarball fetched | Not needed while serving (Section 6.3) |
-| Disk | About 1.4 MB for `node_modules` plus the 185-byte script | Measured | The Node.js binary itself is about 125 MB (124,827,920 bytes, x64) |
-| CPU architecture | Any with an official Node.js build | x86_64 | Node.js v22.23.3 publishes `linux-x64`, `linux-arm64`, `linux-x64-musl` and other builds |
+| Package manager | npm | npm 11.18.0. Node.js v22.23.3 itself ships npm 10.9.9 | Needed only to install lodash |
+| Network at install time | HTTPS to registry.npmjs.org | lodash 4.18.1 tarball fetched | Not needed while serving (Section 6.3) |
+| Disk | About 1.4 MB for node_modules plus the 426-byte script and the 76-byte `README.md` | Measured | The Node.js binary itself is about 125 MB (124,827,920 bytes, x64) |
+| CPU architecture | Any with an official Node.js build | x86_64 | Node.js v22.23.3 publishes linux-x64, linux-arm64, linux-x64-musl and other builds |
 
 ### 8.3.2 Dependency Management
 
-**As built.** No manifest declares `lodash`, so a clean checkout exits with code 1 (`MODULE_NOT_FOUND`, E-01). Hosts that install it by hand get whatever version they choose. Version 4.17.21 carries three advisories, one of them high severity (Section 3.3.4).
+**As built.** No manifest declares `lodash`, so a clean checkout exits with code 1 (`MODULE_NOT_FOUND`, E-01). `README.md` records the manual workaround as `npm install lodash`, which installs whatever copy the registry serves as `latest`, records no version and produces no lockfile. It therefore clears neither gate G1 (Section 8.3.4) nor constraint C-002 (Section 2.6.2). Hosts that install it by hand get whatever version they choose. Version 4.17.21 carries three advisories, one of them high severity (Section 3.3.4).
 
 **Minimum requirement.** Either declare the dependency or remove it:
 
 1. **Declare it.** Add a manifest such as the prototype below. `npm install` then writes a lockfile that records `https://registry.npmjs.org/lodash/-/lodash-4.18.1.tgz` with a `sha512` integrity hash. `npm ci` reproduced the install exactly ("added 1 package in 264ms"), and `npm audit --omit=dev` reported 0 vulnerabilities.
-2. **Remove it.** Line 1 is never used (F-005-RQ-003), so deleting it leaves the script with no dependencies beyond Node.js. This also removes failure mode E-01 (Section 6.6.5.4).
+2. **Remove it.** Line 5 is never used (F-005-RQ-003), so deleting it leaves the script with no dependencies beyond Node.js. This also removes failure mode E-01 (Section 6.6.5.4).
 
 ```json
 { "private": true, "engines": { "node": ">=22" }, "dependencies": { "lodash": "^4.18.1" } }
@@ -5149,14 +5168,16 @@ The script runs unchanged, with no transpilation, bundling or asset pipeline. Th
 ### 8.3.3 Build Procedure and Artifacts
 
 | Artifact | Size | Produced By | Stored In |
-|---|---|---|---|
-| `server (1).js` | 185 bytes | Commit `f0ba73b` | Git remote (`origin`, hosted on `github.com`) |
-| Full clone | 29,614 bytes, including `.git` | `git clone` | Host working directory |
-| Source tarball | 351 bytes, gzip | `git archive --format=tar.gz HEAD` | Not produced today. A CI step could attach it to a release |
-| `node_modules` | 1,414,119 bytes, 1 package | `npm install` or `npm ci` | Host only; never committed |
-| Lockfile | — | `npm install` with a manifest | Prototype only. It would be committed with the manifest |
+| --- | --- | --- | --- |
+| server (1).js | 426 bytes over 10 lines (4 of them comments); the earlier 185-byte version is still on `main` | `0610_02` at commit `93f60af`, originally added in `f0ba73b` | Git remote (origin, hosted on github.com) |
+| README.md | 76 bytes over 5 lines | Commit `de89092`; current content on `0610_02` at `93f60af` | Git remote |
+| blitzy/documentation/Technical Specifications.md | 425,826 bytes | The Blitzy documentation commits | Git remote, on `0610_02` only |
+| Full clone | 182,259 bytes of `.git` plus 427,003 bytes of working tree, measured at `93f60af` over the nine-commit history | git clone | Host working directory |
+| Source tarball | 440,320 bytes as tar, 133,793 bytes gzipped (`git archive 93f60af`); the tracked specification accounts for 425,826 of those bytes | git archive --format=tar.gz | Not produced today. A CI step could attach it to a release |
+| node_modules | 1,414,119 bytes, 1 package | npm install or npm ci | Host only; never committed |
+| Lockfile | — | npm install with a manifest | Prototype only. It would be committed with the manifest |
 
-There is no artifact registry, no `npm publish` and no container registry. Launch commands must quote the file name because it contains a space and parentheses (constraint C-005):
+There is no artifact registry, no `npm publish` and no container registry. Launch commands must quote the file name because it contains a space and parentheses (constraint C-005). `README.md` states the same two steps:
 
 ```bash
 npm ci && node "server (1).js"
@@ -5169,19 +5190,19 @@ npm ci && node "server (1).js"
 The minimal pipeline is the gated sequence designed and prototyped in Section 6.6.4. The `origin` remote is hosted on `github.com`, so GitHub Actions is the natural runner. Any CI service with Node.js 22.x and a free port 3000 can run the same commands.
 
 | Trigger | Scope |
-|---|---|
-| Push or pull request to `main` or `0610_02` | Full pipeline |
-| Change to `server (1).js`, `package.json`, the lockfile or `test/` | Full pipeline |
+| --- | --- |
+| Push or pull request to main or 0610_02 | Full pipeline |
+| Change to server (1).js, package.json, the lockfile or test/ | Full pipeline |
 | Weekly schedule | Dependency audit plus the full test suite, to catch new advisories and runtime patches |
 
 | Gate | Command | Pass Criterion | Result Against Current Code |
-|---|---|---|---|
-| G1 Install | `npm ci` | Exit 0 | **Cannot run:** no `package.json` or lockfile |
-| G2 Static analysis | `npx eslint .` | 0 errors | **Fails:** unused `_` at line 1, column 7 |
-| G3 Dependency audit | `npm audit --omit=dev` | Exit 0 | **Passes** with `lodash` 4.18.1; fails with 4.17.21 |
-| G4 Unit coverage | `npm run test:coverage` | 100% lines, branches, functions | **Passes** in the prototype |
-| G5 Black-box suite | `npm run test:blackbox`, serial | 100% pass | **Passes**, 24 of 24 |
-| G6 Performance smoke | Part of the black-box suite | 5,000 requests under 5,000 ms | **Passes**, 318.3 ms |
+| --- | --- | --- | --- |
+| G1 Install | npm ci | Exit 0 | Cannot run: no package.json or lockfile. The `npm install lodash` line in `README.md` does not supply either |
+| G2 Static analysis | npx eslint . | 0 errors | Fails: unused _ at line 5, column 7 |
+| G3 Dependency audit | npm audit --omit=dev | Exit 0 | Passes with lodash 4.18.1; fails with 4.17.21. Unpinned installs are not covered (C-002) |
+| G4 Unit coverage | npm run test:coverage | 100% lines, branches, functions | Passes in the prototype |
+| G5 Black-box suite | npm run test:blackbox, serial | 100% pass | Passes, 24 of 24 |
+| G6 Performance smoke | Part of the black-box suite | 5,000 requests under 5,000 ms | Passes, 318.3 ms |
 
 The pipeline has no build stage and no deploy stage. It ends at the quality-gate verdict, and its only outputs are `reports/junit.xml` and `reports/lcov.info` (Section 6.6.4.4). Section 8.4 covers what happens after a green verdict. Section 6.6.5.4 gives the two ways to clear G2.
 
@@ -5192,25 +5213,25 @@ The repository has no deployment pipeline. Deployment is the manual path shown i
 ### 8.4.1 Distribution Channel
 
 | Channel | Status | Notes |
-|---|---|---|
-| Git remote (`origin`, hosted on `github.com`) | **The only channel.** `main` and `0610_02` both point to `f0ba73b` | Hosts get the code with `git clone` or `git checkout` |
+| --- | --- | --- |
+| Git remote (origin, hosted on github.com) | The only channel. `main` and `origin/main` are at `f0ba73b`; `0610_02` and `origin/0610_02` are at `93f60af` | Hosts get the code with git clone or git checkout |
 | Git tags or releases | None (0 tags) | No version identifier exists apart from the commit SHA |
 | npm package | None | There is no manifest, so nothing can be published |
 | Container image | None | Section 8.2.4 |
 | OS package or installer | None | — |
 
-Deploy a commit SHA, not a branch name. The two branches are identical today, but a branch head can move between deployments.
+Which head is deployed decides what the host gets: `main` at `f0ba73b` carries only the original five-line `server (1).js`, while `0610_02` at `93f60af` also carries `README.md` and the four JSDoc comments. Deploy a commit SHA, not a branch name: the two branches no longer hold identical content, and a branch head can move between deployments.
 
 ### 8.4.2 Deployment Procedure
 
 | Step | Action | Success Signal | Failure Signal |
-|---|---|---|---|
-| 1. Provision runtime | Install Node.js 22.x | `node -v` prints `v22.x` | — |
-| 2. Fetch source | `git clone`, then `git checkout <SHA>` | `server (1).js` present, 185 bytes for `f0ba73b` | — |
-| 3. Provide dependency | `npm ci` from a committed lockfile, or delete line 1 | `added 1 package` | Install error; G1 fails |
+| --- | --- | --- | --- |
+| 1. Provision runtime | Install Node.js 22.x | node -v prints v22.x | — |
+| 2. Fetch source | git clone, then git checkout <SHA> | server (1).js present: 426 bytes over 10 lines at 93f60af, 185 bytes at f0ba73b | — |
+| 3. Provide dependency | npm ci from a committed lockfile, or the manual `npm install lodash` that `README.md` documents, or delete line 5 | added 1 package | Install error; G1 fails |
 | 4. Stop previous instance | Send SIGTERM to the old process | Exit code 143 | Port stays occupied |
-| 5. Launch | `node "server (1).js"`, with the file name quoted | Readiness line on stdout | Exit 1: `MODULE_NOT_FOUND` (E-01) or `EADDRINUSE :::3000` (E-02) |
-| 6. Validate | Section 8.4.5 | `200 OK`, `Content-Length: 14` | Roll back (Section 8.4.4) |
+| 5. Launch | node "server (1).js", with the file name quoted | Readiness line on stdout | Exit 1: MODULE_NOT_FOUND (E-01) or EADDRINUSE :::3000 (E-02) |
+| 6. Validate | Section 8.4.5 | 200 OK, Content-Length: 14 | Roll back (Section 8.4.4) |
 
 #### Deployment Workflow Diagram
 
@@ -5223,7 +5244,7 @@ flowchart TD
     InstallRt --> Fetch
     RtOk -- "Yes" --> Fetch["git clone or git checkout SHA"]
     Fetch --> DepOk{"lodash resolvable<br/>from the script folder?"}
-    DepOk -- "No" --> InstallDep["npm install lodash@^4.18.1<br/>or delete unused line 1"]
+    DepOk -- "No" --> InstallDep["npm install lodash@^4.18.1<br/>or delete unused line 5"]
     InstallDep --> Stop
     DepOk -- "Yes" --> Stop["Stop running instance<br/>SIGTERM, exit 143"]
     Stop --> Launch["node server (1).js<br/>file name quoted"]
@@ -5247,7 +5268,7 @@ The code supports only one strategy on a single host: **recreate**, meaning stop
 In three measured in-place redeployments, the new instance printed its readiness line 38.9–42.9 ms after the old one received SIGTERM, and answered its first `200` after 42.0–46.1 ms. Requests sent in that window were refused (`ECONNREFUSED`). Requests in flight on the old process were dropped, because there is no graceful drain (E-07).
 
 | Strategy | Feasible | Constraint |
-|---|---|---|
+| --- | --- | --- |
 | Recreate on one host | Yes | About 45 ms of refused connections; in-flight requests are dropped |
 | Blue-green on one host | No | The literal port blocks a second listener (ADR-005) |
 | Blue-green across hosts | Only with an external load balancer or DNS switch | Neither exists in the repository |
@@ -5263,7 +5284,7 @@ The diagram contrasts the as-built path with the minimal promotion path. The min
 ```mermaid
 flowchart LR
     subgraph AsBuilt["As built: one undeclared environment"]
-        Commit["Commit f0ba73b<br/>main and 0610_02"]
+        Commit["Commit 93f60af on 0610_02<br/>f0ba73b on main"]
         Manual["Manual checkout<br/>no gates"]
         OneHost["Whichever host runs it"]
     end
@@ -5290,7 +5311,7 @@ flowchart LR
 
 ### 8.4.4 Rollback Procedures
 
-Today there is nothing to roll back to: the history has a single commit, `f0ba73b`. Once more versions exist, a rollback is a redeployment of the previous known-good SHA or tag:
+Today there is nothing to roll back to beyond the previous revision: the history holds nine commits, and only `8fc5d62` and `ea9f159` changed the script after `f0ba73b` was committed. Once more versions exist, a rollback is a redeployment of the previous known-good SHA or tag:
 
 1. `git checkout <previous SHA>`, then `npm ci` so the lockfile restores the earlier `lodash` version.
 2. Stop the current process with SIGTERM and relaunch with `node "server (1).js"`.
@@ -5301,35 +5322,35 @@ Rollback carries no data-compatibility risk, because there is no schema, store o
 ### 8.4.5 Post-Deployment Validation
 
 | Check | Method | Expected Result |
-|---|---|---|
-| Process started | stdout | Exactly `Server running at http://127.0.0.1:3000/`. The URL is fixed text; the actual bind is `::` (AA-04) |
+| --- | --- | --- |
+| Process started | stdout | Exactly Server running at http://127.0.0.1:3000/. The URL is fixed text; the actual bind is :: (AA-04) |
 | No startup error | stderr | Empty |
-| HTTP response | `curl -i http://127.0.0.1:3000/` | `HTTP/1.1 200 OK`, `Content-Length: 14`, body `Hello, World!` |
-| Listener address | The host's socket table | One TCP listener on `::` port 3000 |
-| Network exposure | Request from outside the host | `200` only where exposure is intended; refused where the firewall blocks it |
-| Runtime version | `node -v` | The same 22.x release used in CI |
+| HTTP response | curl -i http://127.0.0.1:3000/ | HTTP/1.1 200 OK, Content-Length: 14, body Hello, World! |
+| Listener address | The host's socket table | One TCP listener on :: port 3000 |
+| Network exposure | Request from outside the host | 200 only where exposure is intended; refused where the firewall blocks it |
+| Runtime version | node -v | The same 22.x release used in CI |
 
 ### 8.4.6 Release Management
 
-**As built.** There are no version numbers, tags, changelog or release notes. The only version record is the requirement baseline v1.0 at commit `f0ba73b` in Section 2.6.3.
+**As built.** There are no version numbers, tags, changelog or release notes. The only version record is the requirement baseline v1.0, fixed at commit `f0ba73b`, which is still the head of `main` (Section 2.6.3).
 
 **Minimum requirement:**
 
-- Tag each deployed SHA, for example `v1.0.0` for `f0ba73b`, so that rollback targets have names.
+- Tag each deployed SHA, for example `v1.0.0` for `f0ba73b` and `v1.0.1` for `93f60af`, so that rollback targets have names.
 - Add a row to the version table in Section 2.6.3 for each behaviour change, in the same commit as the updated test constants (Section 6.6.5.5).
-- Optionally attach the `git archive` tarball (351 bytes) to the GitHub release as an immutable distribution artifact.
+- Optionally attach the `git archive` tarball to the GitHub release as an immutable distribution artifact. At `93f60af` it is 133,793 bytes gzipped, most of it the tracked specification; at `f0ba73b` it was 340 bytes.
 
 ## 8.5 Host Environment, Resource Sizing and Cost Estimates
 
 ### 8.5.1 Host and Network Requirements
 
 | Requirement | Value | Evidence |
-|---|---|---|
-| Inbound traffic | TCP port 3000 on `::`, which accepts both IPv4 and IPv6. Plain HTTP/1.1 only, with no TLS or HTTP/2 | The process socket table shows one listener, `::` port `0BB8` (3000); Section 6.3 |
+| --- | --- | --- |
+| Inbound traffic | TCP port 3000 on ::, which accepts both IPv4 and IPv6. Plain HTTP/1.1 only, with no TLS or HTTP/2 | The process socket table shows one listener, :: port 0BB8 (3000); Section 6.3 |
 | Outbound traffic while serving | None | Section 6.3 |
-| Outbound traffic at install or deploy time | HTTPS to `registry.npmjs.org` (`npm ci`, `npm audit`) and to `github.com` (`git fetch`) | Sections 8.3.2 and 8.4.1 |
+| Outbound traffic at install or deploy time | HTTPS to registry.npmjs.org (npm ci, npm audit) and to github.com (git fetch) | Sections 8.3.2 and 8.4.1 |
 | Transport security | None in the process. A reverse proxy or load balancer must terminate TLS if one is needed | Sections 5.4.4 and 6.4 |
-| Privileges | An unprivileged account is enough. Verified: the process served `200` running as `nobody`. It needs read access to the script and `node_modules`, and no write access | Port 3000 is above 1024; the process writes no files (Section 6.2) |
+| Privileges | An unprivileged account is enough. Verified: the process served 200 running as nobody. It needs read access to the script and node_modules, and no write access | Port 3000 is above 1024; the process writes no files (Section 6.2) |
 | Supervision | None in the repository. A host supervisor should restart the process on exit codes 1, 137 and 143 | Sections 3.6.3 and 4.3.2 |
 | Log capture | stdout and stderr only. Retention depends on whatever captures them | Section 5.4.2 |
 
@@ -5340,16 +5361,16 @@ The diagram separates what the repository supplies (one file), what an operator 
 ```mermaid
 flowchart LR
     subgraph Remote["Source distribution"]
-        GitRemote[("GitHub-hosted origin remote<br/>branches main, 0610_02<br/>commit f0ba73b")]
+        GitRemote[("GitHub-hosted origin remote<br/>main at f0ba73b<br/>0610_02 at 93f60af")]
         NpmReg[["npm public registry<br/>registry.npmjs.org"]]
     end
     subgraph HostBox["Single host: VM, bare metal or developer machine"]
         subgraph InRepo["Supplied by the repository"]
-            Script["server (1).js<br/>185 bytes, run unchanged"]
+            Script["server (1).js<br/>426 bytes over 10 lines, run unchanged"]
         end
         subgraph Operator["Supplied by the operator"]
             NodeRt["Node.js runtime<br/>22.x verified, not pinned"]
-            Mods[("node_modules/lodash<br/>installed by hand")]
+            Mods[("node_modules/lodash<br/>installed by hand, as README.md records")]
             Proc["node server (1).js<br/>one process, one core<br/>listens on :: port 3000"]
         end
         subgraph HostOpt["Host capabilities, absent unless added"]
@@ -5364,7 +5385,7 @@ flowchart LR
     NpmReg -. "npm install, install time only" .-> Mods
     NodeRt --> Proc
     Script --> Proc
-    Mods -- "require at line 1" --> Proc
+    Mods -- "require at line 5" --> Proc
     Clients --> Fw
     Fw -.-> Proxy
     Proxy -.-> Proc
@@ -5414,12 +5435,12 @@ flowchart LR
 Measured on Node.js v22.23.3 with the client on the same host. These are baselines, not service levels.
 
 | Resource | Measured | Minimum | Recommended |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | CPU | One event-loop thread (7 OS threads in total). Saturates one core at about 80,000 req/s (Section 6.1.3.5) | 1 vCPU; burstable is fine | 1–2 vCPU. Further cores go unused by one process (ADR-003) |
 | Memory (process RSS) | 53.6 MB idle; 71.8 MB after 40,000 requests; about 75 MB at saturation | 128 MB available to the process | 512 MB host or more, to leave room for the OS (not measured on such a host) |
-| Disk | Node.js binary about 125 MB; npm 19 MB; `lodash` 1.4 MB; clone 29.6 KB | About 200 MB including the runtime | The host image's default volume |
+| Disk | Node.js binary about 125 MB; npm 19 MB; lodash 1.4 MB; clone at `93f60af` is 182,259 bytes of `.git` plus a 427,003-byte working tree (it was about 29.6 KB at `f0ba73b`) | About 200 MB including the runtime | The host image's default volume |
 | Network | 14-byte body per response. 24,679–27,133 req/s over 50 keep-alive sockets | Inbound TCP 3000 | Sized to expected client traffic |
-| Startup | Readiness line at 49 ms; first `200` at 58 ms | — | Supervisor restart delay of 1 s or more |
+| Startup | Readiness line at 49 ms; first 200 at 58 ms | — | Supervisor restart delay of 1 s or more |
 
 CI runners need one core and about 256 MB free memory for the full test suite (Section 6.6.5.6).
 
@@ -5436,18 +5457,18 @@ The repository defines no scalability targets.
 The repository defines no hosting target. The figures below price the smallest suitable cloud hosts as a reference. Source: AWS EC2 on-demand Linux prices for US East (N. Virginia), in the price file published 2026-09-25, at 730 hours per month.
 
 | Instance | vCPU / Memory | USD per Hour | USD per Month |
-|---|---|---|---|
-| `t4g.nano` (Arm64) | 2 / 0.5 GiB | 0.0042 | 3.07 |
-| `t3.nano` (x86_64) | 2 / 0.5 GiB | 0.0052 | 3.80 |
-| `t4g.micro` (Arm64) | 2 / 1 GiB | 0.0084 | 6.13 |
-| `t3.micro` (x86_64) | 2 / 1 GiB | 0.0104 | 7.59 |
-| `t4g.small` (Arm64) | 2 / 2 GiB | 0.0168 | 12.26 |
+| --- | --- | --- | --- |
+| t4g.nano (Arm64) | 2 / 0.5 GiB | 0.0042 | 3.07 |
+| t3.nano (x86_64) | 2 / 0.5 GiB | 0.0052 | 3.80 |
+| t4g.micro (Arm64) | 2 / 1 GiB | 0.0084 | 6.13 |
+| t3.micro (x86_64) | 2 / 1 GiB | 0.0104 | 7.59 |
+| t4g.small (Arm64) | 2 / 2 GiB | 0.0168 | 12.26 |
 
 | Scenario | Composition | Compute, USD per Month |
-|---|---|---|
-| Single instance (equivalent to the as-built design) | 1 × `t4g.nano` | 3.07 |
-| Single instance, x86_64 | 1 × `t3.nano` | 3.80 |
-| Redundant pair | 2 × `t4g.nano` | 6.13, plus a load balancer |
+| --- | --- | --- |
+| Single instance (equivalent to the as-built design) | 1 × t4g.nano | 3.07 |
+| Single instance, x86_64 | 1 × t3.nano | 3.80 |
+| Redundant pair | 2 × t4g.nano | 6.13, plus a load balancer |
 | Development and test | Existing developer machine or CI runner | No extra compute |
 
 **Not included:** block storage, public IPv4 addresses, data transfer, load balancers, TLS certificates and CI minutes. Add these from the provider's current price list. The Arm64 options assume the official `linux-arm64` Node.js build; the script itself was verified on x86_64 only.
@@ -5462,12 +5483,12 @@ The repository defines no hosting target. The figures below price the smallest s
 ### 8.5.5 External Dependencies
 
 | Dependency | Type | Needed When | Notes |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Node.js 22.x | Runtime | Always | Not pinned (C-003). The 22.x line reaches end of life on 2027-04-30 |
-| `lodash` `^4.18.1` (MIT) | npm library | Startup (line 1) | The binding is unused; pin it or delete the line (Section 8.3.2) |
-| npm public registry (`registry.npmjs.org`) | Package source | Install and audit | Never contacted while serving |
-| GitHub (`origin` remote) | Source hosting | Deploy and rollback | The only distribution channel (Section 8.4.1) |
-| Host network stack and firewall | Platform | Always | Decide who can reach `::` port 3000 |
+| lodash ^4.18.1 (MIT) | npm library | Startup (line 5) | The binding is unused; pin it or delete the line (Section 8.3.2) |
+| npm public registry (registry.npmjs.org) | Package source | Install and audit | Never contacted while serving |
+| GitHub (origin remote) | Source hosting | Deploy and rollback | The only distribution channel (Section 8.4.1) |
+| Host network stack and firewall | Platform | Always | Decide who can reach :: port 3000 |
 | Reverse proxy or load balancer | Platform, optional | When TLS or redundancy is needed | Not provided |
 | Process supervisor | Platform, optional | For automatic restart | Not provided |
 | CI runner, such as GitHub Actions | Platform, optional | For quality gates | Not configured (Section 8.3.4) |
@@ -5479,21 +5500,21 @@ The repository defines no hosting target. The figures below price the smallest s
 **As built, nothing is monitored.** The process exposes no metrics, health route or access log (Section 6.5). It signals its state only through the readiness line, its exit code and its HTTP responses. Infrastructure monitoring therefore has to come from the host.
 
 | Area | As Built | Minimum Host Practice |
-|---|---|---|
+| --- | --- | --- |
 | Resource monitoring | None | Track process CPU against the one-core ceiling, RSS against the 54–75 MB baseline, and open socket counts |
-| Performance metrics | None; no access log | Probe `GET /` with a timeout and record latency. A TCP-only probe is not enough: a stopped (`SIGSTOP`) process still completed TCP connects but sent no HTTP response (Section 6.5) |
-| Availability | None | HTTP probe expecting `200` and a 14-byte body, plus exit codes reported by the supervisor (1, 130, 137, 143) |
+| Performance metrics | None; no access log | Probe GET / with a timeout and record latency. A TCP-only probe is not enough: a stopped (SIGSTOP) process still completed TCP connects but sent no HTTP response (Section 6.5) |
+| Availability | None | HTTP probe expecting 200 and a 14-byte body, plus exit codes reported by the supervisor (1, 130, 137, 143) |
 | Cost monitoring | None | A provider billing alert set just above the expected monthly cost (Section 8.5.4) |
-| Security monitoring | None. Requests and rejections leave no server-side trace | Firewall or proxy access logs, the weekly `npm audit` run (Section 8.3.4) and Node.js security-release tracking |
+| Security monitoring | None. Requests and rejections leave no server-side trace | Firewall or proxy access logs, the weekly npm audit run (Section 8.3.4) and Node.js security-release tracking |
 | Compliance auditing | None | Git history as the change record. Proxy access logs where an access audit is required |
 
 ### 8.6.2 Maintenance Procedures
 
 | Task | When | Procedure |
-|---|---|---|
+| --- | --- | --- |
 | Node.js patch update | Each 22.x security release | Install the patched release, rerun gates G1–G6, then recreate the process (Section 8.4.2) |
 | Node.js major upgrade | Before 2027-04-30, when 22.x reaches end of life | Move to 24.x (maintenance LTS from 2026-10-20, end of life 2028-04-30). Recheck the runtime defaults recorded in Section 5.2.2 (assumption A-002) |
-| Dependency review | Weekly scheduled pipeline | `npm audit --omit=dev`. Update the lockfile on an advisory, or delete line 1 to remove the dependency |
+| Dependency review | Weekly scheduled pipeline | npm audit --omit=dev. Update the lockfile on an advisory, or delete line 5 to remove the dependency |
 | Port check | Each deployment | Make sure no other process holds port 3000 (E-02) |
 | Log handling | Host policy | Each start writes one 41-byte line, and failures write a stack trace. Volume is negligible, so rotation is only a host-policy matter |
 | Release hygiene | Each release | Deploy tagged SHAs, never moving branch heads (Section 8.4.6) |
@@ -5503,8 +5524,8 @@ The repository defines no hosting target. The figures below price the smallest s
 The system holds no data, so disaster recovery means restoring the service only. The full position and failure-scenario table are in Section 5.4.6.
 
 | Attribute | Position |
-|---|---|
-| Assets to protect | Source only: `server (1).js` at `f0ba73b` on `main`, `0610_02` and the `origin` remote. A manifest and lockfile would join them once committed |
+| --- | --- |
+| Assets to protect | Source only: `server (1).js` (ten lines) and `README.md` on `0610_02` at `93f60af`, mirrored on `origin/0610_02`, with the earlier five-line `server (1).js` on `main` and `origin/main` at `f0ba73b`. A manifest and lockfile would join them once committed |
 | Backups | Git replication only. A mirror of the remote is the only optional extra; there is no runtime state |
 | RPO | Not applicable; no data is created |
 | RTO | Not defined. A technical restart takes about 45 ms (Section 8.4.3.1). Without a supervisor, real recovery time is the operator's response time |
@@ -5513,8 +5534,8 @@ The system holds no data, so disaster recovery means restoring the service only.
 Host-loss recovery sequence:
 
 1. Provision a host that meets Section 8.5.1 and install Node.js 22.x.
-2. `git clone` the remote and `git checkout` the recorded SHA.
-3. `npm ci`, or `npm install lodash@^4.18.1` while no lockfile exists, or delete line 1.
+2. `git clone` the remote and `git checkout` the recorded SHA (`93f60af` on `0610_02`, or `f0ba73b` on `main`).
+3. `npm ci`, or `npm install lodash@^4.18.1` while no lockfile exists (the manual step `README.md` records), or delete line 5.
 4. `node "server (1).js"`, under a supervisor if one is available.
 5. Run the checks in Section 8.4.5.
 
@@ -5523,11 +5544,11 @@ Host-loss recovery sequence:
 These requirements follow from Section 6.4, which leaves every network-level control to the host.
 
 | Control | Requirement | Reason |
-|---|---|---|
-| Network exposure | Allow inbound TCP 3000 only from intended clients, or only from a local proxy | The process binds `::`, not the `127.0.0.1` shown in the log (AA-04) |
+| --- | --- | --- |
+| Network exposure | Allow inbound TCP 3000 only from intended clients, or only from a local proxy | The process binds ::, not the 127.0.0.1 shown in the log (AA-04) |
 | Encryption in transit | Terminate TLS at a proxy or load balancer | The process serves plain HTTP only (ADR-007) |
-| Least privilege | Run under a dedicated unprivileged account with read-only access to the files | Verified to work as `nobody`; the process writes nothing |
-| Dependency integrity | Install with `npm ci` from a lockfile with `sha512` hashes | An unpinned `lodash` may be a vulnerable version (C-002) |
+| Least privilege | Run under a dedicated unprivileged account with read-only access to the files | Verified to work as nobody; the process writes nothing |
+| Dependency integrity | Install with npm ci from a lockfile with sha512 hashes | An unpinned lodash may be a vulnerable version (C-002) |
 | Runtime currency | Stay on a supported Node.js line | 22.x reaches end of life on 2027-04-30 |
 | Abuse limits | Enforce connection and rate limits at the proxy | The process has no rate limiting (Section 6.3) |
 | Secrets | None needed | The process uses no keys, tokens or certificates |
@@ -5536,8 +5557,10 @@ These requirements follow from Section 6.4, which leaves every network-level con
 
 #### Repository Files and Folders
 
-- `server (1).js` - The only source file. Line 1 requires `lodash` (the dependency to install or delete). Line 3 creates a plain `http` server. Line 5 hard-codes port `3000` and the readiness text. The file reads no environment variables or configuration. It was used for every runtime measurement: footprint, startup, RSS, throughput, the unprivileged run and the redeploy gap.
-- `` (repository root) - Contains only `server (1).js` on every ref (`main`, `0610_02`, `origin/main`, `origin/0610_02`), at single commit `f0ba73b`, with no tags. It has no IaC, container, orchestration, CI, manifest, lockfile or environment files. The `origin` remote is hosted on `github.com`.
+- `server (1).js` - The only source file, ten lines in the `0610_02` state at `93f60af` (lines 5–10 execute; lines 1-3 and line 7 are JSDoc comments). Line 5 requires `lodash` (the dependency to install or delete). Line 8 creates a plain `http` server. Line 10 hard-codes port `3000` and the readiness text. The file reads no environment variables or configuration. It was used for every runtime measurement: footprint, startup, RSS, throughput, the unprivileged run and the redeploy gap.
+- `README.md` - Project name, install step `npm install lodash` and run step `node "server (1).js"`. It records the manual setup but no infrastructure requirement.
+- `blitzy/documentation/Technical Specifications.md` - The tracked copy of this specification, present on `0610_02`.
+- \`\` (repository root) - Holds `server (1).js`, `README.md` and the `blitzy/` documentation folder on `0610_02` and `origin/0610_02` at `93f60af`; `main` and `origin/main` at `f0ba73b` hold only the earlier `server (1).js`. Nine commits, with no tags. It has no IaC, container, orchestration, CI, manifest, lockfile or environment files. The `origin` remote is hosted on `github.com`.
 
 #### Technical Specification Cross-References
 
@@ -5559,70 +5582,90 @@ These requirements follow from Section 6.4, which leaves every network-level con
 
 #### Web Sources
 
-- [web] AWS EC2 on-demand price file, Linux, US East (N. Virginia) (`b0.p.awsstatic.com/pricing/2.0/meteredUnitMaps/ec2/USD/current/ec2-ondemand-without-sec-sel/`), published 2026-09-25 - Hourly prices and vCPU/memory for `t4g.nano`, `t3.nano`, `t4g.micro`, `t3.micro` and `t4g.small`.
-- [web] Node.js Release schedule (`raw.githubusercontent.com/nodejs/Release/main/schedule.json`) - 22.x end of life 2027-04-30; 24.x maintenance from 2026-10-20 and end of life 2028-04-30.
-- [web] Node.js distribution index (`nodejs.org/dist/index.json`) - v22.23.3 bundles npm 10.9.9 and publishes `linux-x64`, `linux-arm64` and `linux-x64-musl` builds.
+- \[web\] AWS EC2 on-demand price file, Linux, US East (N. Virginia) (`b0.p.awsstatic.com/pricing/2.0/meteredUnitMaps/ec2/USD/current/ec2-ondemand-without-sec-sel/`), published 2026-09-25 - Hourly prices and vCPU/memory for `t4g.nano`, `t3.nano`, `t4g.micro`, `t3.micro` and `t4g.small`.
+- \[web\] Node.js Release schedule (`raw.githubusercontent.com/nodejs/Release/main/schedule.json`) - 22.x end of life 2027-04-30; 24.x maintenance from 2026-10-20 and end of life 2028-04-30.
+- \[web\] Node.js distribution index (`nodejs.org/dist/index.json`) - v22.23.3 bundles npm 10.9.9 and publishes `linux-x64`, `linux-arm64` and `linux-x64-musl` builds.
 
-# 9. Appendices
+##### 9. Appendices Updated
 
-## 9.1 Additional Technical Information
+## 9.1 Additional Technical Information updated
 
-This sub-section records repository facts that Sections 1 to 8 do not state, then consolidates reference data that is spread across them. Every new fact was checked against commit `f0ba73b` on 2026-10-06. The repository holds a single tracked file, `server (1).js`, so all file-level data below refers to it.
+This sub-section records repository facts that Sections 1 to 8 do not state, then consolidates reference data that is spread across them. Every fact was re-checked at the `0610_02` head `93f60af` on 2026-10-12. That head tracks three files - `server (1).js`, `README.md` and `blitzy/documentation/Technical Specifications.md` - while `main` at `f0ba73b` tracks only `server (1).js`. Unless a row says otherwise, the file-level data below describes `server (1).js` in the `93f60af` state.
 
 ### 9.1.1 Source File Metadata and Integrity
 
 | Attribute | Value | Significance |
-|---|---|---|
-| Path | `server (1).js` at the repository root | The only tracked file on every ref (`main`, `0610_02`, `origin/main`, `origin/0610_02`) |
-| Size and lines | 185 bytes; 5 lines, each ending in a newline | Matches the artifact size in Section 8.3.3 |
-| Line lengths (characters, newline excluded) | 28 / 0 / 44 / 29 / 79 | Line 5 holds the port literal, the listen callback and the log text, which must change together (Section 2.4.4) |
-| Character set | ASCII only (no byte above `0x7F`); no byte order mark | The file decodes identically as ASCII or UTF-8 |
+| --- | --- | --- |
+| Path | server (1).js at the repository root | One of the three tracked files on `0610_02`; the only tracked file on `main` |
+| Size and lines | 426 bytes; 10 lines, each ending in a newline | Matches the artifact size in Section 8.3.3 |
+| Line lengths (characters, newline excluded) | 59 / 59 / 59 / 0 / 28 / 0 / 59 / 44 / 29 / 79 | Lines 1-3 and line 7 are JSDoc comments; line 10 holds the port literal, the listen callback and the log text, which must change together (Section 2.4.4) |
+| Character set | ASCII only (no byte above 0x7F); no byte order mark | The file decodes identically as ASCII or UTF-8 |
 | Line endings | LF only (no CR bytes) | Unix line endings |
-| Git file mode | `100644` (regular, not executable) | The file must be launched through `node` (Section 9.1.3) |
-| Git blob ID | `8869fb6d2b8ccb3bb83fb6822325d12bbea38480` | Git's content address for the file |
-| Git root tree ID | `2777d2aa968cd06d1cc8911bd4dfc64983008801` | The tree has one entry, the file above |
-| SHA-256 checksum | `7f27a6663b7656d9f7c838d207d038a6ef003805c90e64f89f3d56297f6ea203` | Lets anyone confirm that a copy outside Git, such as a host deployment or the `git archive` tarball in Section 8.3.3, is unmodified |
+| Git file mode | 100644 (regular, not executable) | The file must be launched through node (Section 9.1.3) |
+| Git blob ID | 172e6692d08cc6f34c5c051cb06a24f5e76da450 | Git's content address for the file |
+| Git root tree ID | be236d447d0a284cb24978ea44b9419f5f038f6e | Three entries: `README.md`, the `blitzy/` folder and this file |
+| SHA-256 checksum | 0137ee958e06abe243b243c8853f59a5728bc81c7ccfcad9e65f06e5a2e95736 | Lets anyone confirm that a copy outside Git, such as a host deployment or the git archive tarball in Section 8.3.3, is unmodified |
+
+**The companion tracked file, `README.md`:**
+
+| Attribute | Value | Significance |
+| --- | --- | --- |
+| Path | README.md at the repository root | Added by commit `de89092`; present on `0610_02`, absent from `main` |
+| Size and lines | 76 bytes; 5 lines, each ending in a newline | Line lengths 15 / 0 / 29 / 0 / 27 |
+| Content | `# some_files_01`, the install step `npm install lodash`, the run step `node "server (1).js"` | The only in-repo statement of how to install or run the system |
+| Character set and line endings | ASCII only; LF only | Same conventions as the script |
+| Git file mode | 100644 (regular, not executable) | — |
+| Git blob ID | ef61c677749acf4b7b4b8b1c585f6a5e131efd3b | Git's content address |
+| SHA-256 checksum | da48b4c72b27ffb10c295b8266535b87f74fdfe40b907e4f5257a5a13d8b20be | Independent integrity check |
+
+The third tracked file, `blitzy/documentation/Technical Specifications.md`, is 425,826 bytes (blob `e3c37c5dc86335d7beab4ad1b1f55e0aefb488d6`) and exists on `0610_02` only.
 
 ```bash
-git ls-files -s "server (1).js"   # 100644 8869fb6d2b8ccb3bb83fb6822325d12bbea38480 0  server (1).js
-sha256sum "server (1).js"          # 7f27a6663b7656d9f7c838d207d038a6ef003805c90e64f89f3d56297f6ea203
+git ls-files -s    # 100644 ef61c677…  README.md; 100644 172e6692…  server (1).js; …Technical Specifications.md
+sha256sum "server (1).js" README.md
+# 0137ee958e06abe243b243c8853f59a5728bc81c7ccfcad9e65f06e5a2e95736  server (1).js
+
+#### da48b4c72b27ffb10c295b8266535b87f74fdfe40b907e4f5257a5a13d8b20be  README.md
 ```
 
 **Byte layout of the two fixed outputs:**
 
 | Output | Bytes | Encoding Detail |
-|---|---|---|
-| Response body `Hello, World!\n` (line 4) | 14 | `48 65 6c 6c 6f 2c 20 57 6f 72 6c 64 21 0a`. ASCII, so the UTF-8 length Node.js computes for `Content-Length` equals the character count |
-| Readiness line (line 5) | 41 | 40 characters plus the newline that `console.log` appends (Section 6.5.2.2) |
+| --- | --- | --- |
+| Response body Hello, World!\n (line 9) | 14 | 48 65 6c 6c 6f 2c 20 57 6f 72 6c 64 21 0a. ASCII, so the UTF-8 length Node.js computes for Content-Length equals the character count |
+| Readiness line (line 10) | 41 | 40 characters plus the newline that console.log appends (Section 6.5.2.2) |
 
 ### 9.1.2 Commit Provenance
 
 | Attribute | Value |
-|---|---|
-| Commit | `f0ba73b4b728e8d592fdc4f89f385527e433dc37`. Root commit with no parent; the only commit in the history |
-| Author | `lakshya-blitzy <lakshya@blitzy.com>` |
-| Committer | `GitHub <noreply@github.com>` |
-| Timestamp | 2026-10-06 12:52:01 UTC (18:22:01 +0530), the same for author and committer |
-| Message | `Add files via upload` |
-| Signature | OpenPGP signature, key ID `B5690EEEBB952194`, primary key fingerprint `9684 79A1 AFF9 27E3 7D1A 566B B569 0EEE BB95 2194` |
-| Signature check | `git verify-commit f0ba73b` reports **Good signature from "GitHub <noreply@github.com>"** when checked against the public key published at `https://github.com/web-flow.gpg`. The key is not certified in a local web of trust, so GPG marks its trust level as unknown |
-| Object database | Three objects: one commit, one tree, one blob |
+| --- | --- |
+| Baseline commit | f0ba73b4b728e8d592fdc4f89f385527e433dc37. A root commit with no parent. It was the only commit until the file was revised, and it remains the head of `main` and `origin/main` and the requirement baseline v1.0 (Section 2.6.3) |
+| Baseline author | lakshya-blitzy lakshya@blitzy.com |
+| Baseline committer | GitHub noreply@github.com |
+| Baseline timestamp | 2026-10-06 12:52:01 UTC (18:22:01 +0530), the same for author and committer |
+| Baseline message | Add files via upload |
+| Current head commit | 93f60af05ecb3fb4701fdcc0d6bc76b773619bae, "Merge pull request #1". A merge commit with two parents, ea9f159 (the file revision) and 8029bcb (the Blitzy documentation branch). It is the head of `0610_02`, `origin/0610_02` and `HEAD` |
+| Head author and committer | blitzy-qa[bot] 211743147+blitzy-qa[bot]@users.noreply.github.com, committed by GitHub noreply@github.com on 2026-10-12 11:33:18 UTC |
+| History | Nine commits: f0ba73b, 8fc5d62 and ea9f159 (script revisions), de89092 (README), 8fdee29, 5edfb57, 221d415 and 8029bcb (Blitzy documentation), and the merge 93f60af |
+| Signature | OpenPGP, key ID B5690EEEBB952194, primary key fingerprint 9684 79A1 AFF9 27E3 7D1A 566B B569 0EEE BB95 2194, on f0ba73b, 8fc5d62, ea9f159 and 93f60af. The four Blitzy Agent commits are unsigned |
+| Signature check | git verify-commit reports Good signature from "GitHub noreply@github.com" when checked against the public key published at https://github.com/web-flow.gpg. The key is not certified in a local web of trust, so GPG marks its trust level as unknown |
+| Object database | 28 objects in one pack (150 bytes): the nine commits, their trees and the blobs - including the earlier 185-byte revision of the script |
 | Tags | None (Section 8.4.1) |
 
-**Implication.** Section 3.6.1 calls it an *inference* that the file was uploaded through a web interface. The committer identity and the valid GitHub web-flow signature confirm it: GitHub itself created and signed the commit on behalf of the authenticated account `lakshya-blitzy`. The signature proves GitHub produced the commit object. It says nothing about where the file content came from. The ` (1)` suffix in the file name, which browsers typically add to a duplicate download, remains unexplained by any repository record.
+**Implication.** Section 3.6.1 calls it an *inference* that the file was uploaded through a web interface. The committer identity and the valid GitHub web-flow signature confirm it for `f0ba73b`: GitHub itself created and signed that commit on behalf of the authenticated account `lakshya-blitzy`. The later script revisions and the merge carry the same signature, so GitHub created those objects too. The signature proves GitHub produced the commit object. It says nothing about where the file content came from. The `(1)` suffix in the file name, which browsers typically add to a duplicate download, remains unexplained by any repository record.
 
 ### 9.1.3 Invocation and Parsing Semantics
 
 | Invocation | Observed Result | Reason |
-|---|---|---|
-| `node "server (1).js"` | Runs. Startup can still fail with E-01 or E-02 (Section 4.3.2) | The supported launch command (Section 3.6.2) |
-| `node --check "server (1).js"` | Exit 0 | Parses without executing, so it needs neither `lodash` nor a free port. It works as a dependency-free syntax check |
-| `./"server (1).js"` | `Permission denied`, exit 126 | Git mode `100644`; a checkout creates the file without the execute bit |
-| `chmod +x`, then `./"server (1).js"` | `Syntax error: "(" unexpected`, exit 2 | No `#!` line, so `/bin/sh` reads the file as a shell script |
+| --- | --- | --- |
+| node "server (1).js" | Runs. Startup can still fail with E-01 or E-02 (Section 4.3.2) | The supported launch command (Section 3.6.2), and the run step `README.md` records |
+| node --check "server (1).js" | Exit 0 | Parses without executing, so it needs neither lodash nor a free port. It works as a dependency-free syntax check |
+| ./"server (1).js" | Permission denied, exit 126 | Git mode 100644; a checkout creates the file without the execute bit |
+| chmod +x, then ./"server (1).js" | Syntax error: "(" unexpected, exit 2 | No #! line, so /bin/sh reads the file as a shell script |
 
 **Module and language mode:**
 
-- **CommonJS.** No `package.json` exists, so no `"type"` field applies, and Node.js treats the `.js` file as CommonJS. That is why `require` (lines 1 and 3) is available.
+- **CommonJS.** No `package.json` exists, so no `"type"` field applies, and Node.js treats the `.js` file as CommonJS. That is why `require` (lines 5 and 8) is available.
 - **Sloppy mode.** The file has no `'use strict'` directive. None of its three statements behaves differently in strict mode: `_` is declared with `const`, there are no implicit globals, and `this` is never used.
 - **No exports.** `module.exports` is never assigned, so `require("./server (1).js")` returns an empty object, and binding the port is its only side effect (Section 6.6.2.3).
 
@@ -5631,43 +5674,43 @@ sha256sum "server (1).js"          # 7f27a6663b7656d9f7c838d207d038a6ef003805c90
 These are the values that govern behaviour, read from Node.js v22.23.3. The code sets none of them. They are runtime defaults, which may differ on other versions (assumption A-002).
 
 | Setting | Value | Effect on This System | Section |
-|---|---|---|---|
-| `server.keepAliveTimeout` | 5,000 ms | Advertised to clients as `Keep-Alive: timeout=5` | 4.1.2 |
-| `server.keepAliveTimeoutBuffer` | 1,000 ms | Added to `keepAliveTimeout` before the server itself closes an idle socket. This is why idle connections close after about 6 s, not 5 s | 4.3.1, 6.4.2.3 |
-| `server.headersTimeout` | 60,000 ms | `408 Request Timeout` when headers are incomplete (E-05) | 4.3.2 |
-| `server.connectionsCheckingInterval` | 30,000 ms | Timeouts are checked at this cadence, so a `408` arrives 60–90 s after connect | 4.1.2, 5.1.4 |
-| `server.requestTimeout` | 300,000 ms | Deadline for receiving the whole request | 3.2.1 |
-| `server.timeout` | 0 | No socket inactivity timeout | 4.3.1 |
-| `server.maxRequestsPerSocket` | 0 | Unlimited requests per connection | 6.4.2.3 |
-| `server.maxHeadersCount` | `null` | Node.js falls back to its built-in limit of 2,000 headers | 6.4.6.2 |
-| `http.maxHeaderSize` | 16,384 bytes | Larger request headers get `431` (E-04) | 4.1.1 (D4) |
-| `http.METHODS` | 35 methods | Methods the parser recognises. An unknown token such as `FOO` gets `400` from the parser; every recognised method reaches the handler | 6.3 |
-| Listener in `/proc/<pid>/net/tcp6` | `::` port `0BB8` | `0x0BB8` is 3000 in hexadecimal | 8.5.1 |
-| Exit status | `1`, `130`, `137`, `143` | `1` is an uncaught exception. The others follow the shell convention of 128 plus the signal number: SIGINT (2), SIGKILL (9) and SIGTERM (15) | 4.3.2, 6.5.1 |
+| --- | --- | --- | --- |
+| server.keepAliveTimeout | 5,000 ms | Advertised to clients as Keep-Alive: timeout=5 | 4.1.2 |
+| server.keepAliveTimeoutBuffer | 1,000 ms | Added to keepAliveTimeout before the server itself closes an idle socket. This is why idle connections close after about 6 s, not 5 s | 4.3.1, 6.4.2.3 |
+| server.headersTimeout | 60,000 ms | 408 Request Timeout when headers are incomplete (E-05) | 4.3.2 |
+| server.connectionsCheckingInterval | 30,000 ms | Timeouts are checked at this cadence, so a 408 arrives 60–90 s after connect | 4.1.2, 5.1.4 |
+| server.requestTimeout | 300,000 ms | Deadline for receiving the whole request | 3.2.1 |
+| server.timeout | 0 | No socket inactivity timeout | 4.3.1 |
+| server.maxRequestsPerSocket | 0 | Unlimited requests per connection | 6.4.2.3 |
+| server.maxHeadersCount | null | Node.js falls back to its built-in limit of 2,000 headers | 6.4.6.2 |
+| http.maxHeaderSize | 16,384 bytes | Larger request headers get 431 (E-04) | 4.1.1 (D4) |
+| http.METHODS | 35 methods | Methods the parser recognises. An unknown token such as FOO gets 400 from the parser; every recognised method reaches the handler | 6.3 |
+| Listener in /proc//net/tcp6 | :: port 0BB8 | 0x0BB8 is 3000 in hexadecimal | 8.5.1 |
+| Exit status | 1, 130, 137, 143 | 1 is an uncaught exception. The others follow the shell convention of 128 plus the signal number: SIGINT (2), SIGKILL (9) and SIGTERM (15) | 4.3.2, 6.5.1 |
 
 ### 9.1.5 Identifier Registry
 
 The specification uses the identifier schemes below. Each ID is defined once, in the section shown, and only referenced elsewhere.
 
 | Scheme | Meaning | Range in Use | Defined In |
-|---|---|---|---|
-| `F-XXX` | Feature | F-001 to F-005 | Section 2.1 |
-| `F-XXX-RQ-YYY` | Functional requirement, numbered within its feature | 18 requirements, F-001-RQ-001 to F-005-RQ-003, all at version 1.0 | Section 2.2 (versioning in 2.6.3) |
-| `A-NNN` | Requirement assumption | A-001 to A-005 | Section 2.6.1 |
-| `C-NNN` | Constraint | C-001 to C-006 | Section 2.6.2 |
-| `WF-NN` | Workflow | WF-01 Process Startup, WF-02 Request–Response, WF-03 Connection Lifecycle, WF-04 Process Termination | Section 4.1 |
-| `Dn` | Workflow decision point | D1 to D7 | Section 4.1.1 |
-| `E-NN` | Error catalogue entry | E-01 to E-08 | Section 4.3.2 |
-| `AA-NN` | Architectural assumption | AA-01 to AA-05 | Section 5.1.1 |
-| `ADR-NNN` | Implicit architecture decision record | ADR-001 to ADR-008 | Section 5.3.7 |
-| `PEP n` | Policy enforcement point | PEP 1 (host) to PEP 4 (application; absent) | Section 6.4.3.4 |
-| `Zone n` | Security zone | Zone 0 (untrusted network) to Zone 4 (operator and host) | Section 6.4.5.1 |
+| --- | --- | --- | --- |
+| F-XXX | Feature | F-001 to F-005 | Section 2.1 |
+| F-XXX-RQ-YYY | Functional requirement, numbered within its feature | 18 requirements, F-001-RQ-001 to F-005-RQ-003, all at version 1.0 | Section 2.2 (versioning in 2.6.3) |
+| A-NNN | Requirement assumption | A-001 to A-005 | Section 2.6.1 |
+| C-NNN | Constraint | C-001 to C-006 | Section 2.6.2 |
+| WF-NN | Workflow | WF-01 Process Startup, WF-02 Request–Response, WF-03 Connection Lifecycle, WF-04 Process Termination | Section 4.1 |
+| Dn | Workflow decision point | D1 to D7 | Section 4.1.1 |
+| E-NN | Error catalogue entry | E-01 to E-08 | Section 4.3.2 |
+| AA-NN | Architectural assumption | AA-01 to AA-05 | Section 5.1.1 |
+| ADR-NNN | Implicit architecture decision record | ADR-001 to ADR-008 | Section 5.3.7 |
+| PEP n | Policy enforcement point | PEP 1 (host) to PEP 4 (application; absent) | Section 6.4.3.4 |
+| Zone n | Security zone | Zone 0 (untrusted network) to Zone 4 (operator and host) | Section 6.4.5.1 |
 | Escalation level | Incident escalation tier | Level 0 (automatic) to Level 3 (repository maintainer) | Section 6.5.4.3 |
-| `RB-NN` | Runbook | RB-01 to RB-06 | Section 6.5.4.4 |
-| `E2E-NN` | End-to-end test scenario | E2E-01 to E2E-04 | Section 6.6.3.5 |
-| `Gn` | Quality gate | G1 Install to G6 Performance smoke | Sections 6.6.5.4, 8.3.4 |
-| `GHSA-…` | GitHub Security Advisory ID | GHSA-r5fr-rjxr-66jc, GHSA-f23m-r3pf-42rh, GHSA-xxjr-mmjv-4gpg | Section 3.3.4 |
-| `CWE-NN` | Weakness class | CWE-94, CWE-1321 | Section 3.3.4 |
+| RB-NN | Runbook | RB-01 to RB-06 | Section 6.5.4.4 |
+| E2E-NN | End-to-end test scenario | E2E-01 to E2E-04 | Section 6.6.3.5 |
+| Gn | Quality gate | G1 Install to G6 Performance smoke | Sections 6.6.5.4, 8.3.4 |
+| GHSA-… | GitHub Security Advisory ID | GHSA-r5fr-rjxr-66jc, GHSA-f23m-r3pf-42rh, GHSA-xxjr-mmjv-4gpg | Section 3.3.4 |
+| CWE-NN | Weakness class | CWE-94, CWE-1321 | Section 3.3.4 |
 
 The diagram shows how the schemes link to each other across the specification.
 
@@ -5713,29 +5756,29 @@ flowchart LR
 Every runtime observation and measurement in this specification comes from the environment below, using scratch directories outside the repository. Performance figures were taken with the client on the same host. They are baselines, not service levels.
 
 | Component | Value | Notes |
-|---|---|---|
+| --- | --- | --- |
 | Node.js | v22.23.3 ("Jod" LTS) | Embeds V8 12.4.254.21-node.57, llhttp 9.4.3, libuv 1.51.0 and OpenSSL 3.5.8. OpenSSL is never invoked by the code |
 | npm | 11.18.0 | Installed separately; Node.js v22.23.3 ships npm 10.9.9 |
 | Operating system | Ubuntu 24.04.5 LTS, Linux kernel 6.12.85+, x86_64 | Signal and exit-code behaviour checked on Linux only |
-| Host capacity | 44 CPUs, about 354,503 MB RAM; `os.availableParallelism()` reported 8 | The server used at most one core (Section 6.1.3.5) |
-| lodash | An empty stub module for behaviour checks; real 4.18.1 for install, audit and test prototypes | 4.17.21 was used only for `npm audit` comparisons (Section 3.3.4) |
-| Process identity | Root by default; also verified as the unprivileged user `nobody` | Section 6.4.2.1 |
-| Prototype tooling | `node:test` (built in), ESLint 9.39.5 with `@eslint/js` and `globals` | None of it is committed (Section 6.6.1) |
+| Host capacity | 44 CPUs, about 354,503 MB RAM; os.availableParallelism() reported 8 | The server used at most one core (Section 6.1.3.5) |
+| lodash | An empty stub module for behaviour checks; real 4.18.1 for install, audit and test prototypes | 4.17.21 was used only for npm audit comparisons (Section 3.3.4) |
+| Process identity | Root by default; also verified as the unprivileged user nobody | Section 6.4.2.1 |
+| Prototype tooling | node:test (built in), ESLint 9.39.5 with @eslint/js and globals | None of it is committed (Section 6.6.1) |
 
 ### 9.1.7 Documentation Conventions
 
 | Convention | Meaning |
-|---|---|
-| "Line N" | Line N of `server (1).js` at commit `f0ba73b` |
+| --- | --- |
+| "Line N" | Line N of server (1).js in the `0610_02` state at `93f60af` (lines 1-3 and line 7 are comments; the executable statements are on lines 5, 8, 9 and 10). Where a statement is compared with the earlier revision, the commit is named |
 | Applicability Statement | Opens Sections 6.1 to 6.6, 7.1 and 8.1 when a topic does not apply. It gives a bold verbatim statement, an indicator table, the reason, and an evidence-coverage note |
 | "(As-Built Position)" | A sub-section heading that describes what exists. It does not propose a target design |
-| "Prototype" | An artifact built outside the repository to verify a claim, such as `package.json`, test files or `eslint.config.js`. Never committed |
+| "Prototype" | An artifact built outside the repository to verify a claim, such as package.json, test files or eslint.config.js. Never committed |
 | "Implicit" (ADR status) | A decision the code embodies but that no author recorded (Section 5.3.7) |
-| "Evidence coverage: complete" | Every line of the file and every Git ref was inspected |
+| "Evidence coverage: complete" | Every line of the file - and, since the README was added, that file too - and every Git ref was inspected |
 | Control status values | Implemented, Runtime default, Host-delegated, Absent, N/A (Section 6.4.6.1) |
 | Practice status values | Met, Partially met, Possible but not enforced, Delegated, Not met, Not enforced (Section 6.4.1) |
 | Alert severities | Critical, Warning, Info (Section 6.5.4.1) |
-| Dates | ISO 8601 (`YYYY-MM-DD`). Release-schedule status is as of 2026-10-06 |
+| Dates | ISO 8601 (YYYY-MM-DD). Release-schedule status is as of 2026-10-06; repository facts were re-verified at `93f60af` on 2026-10-12 |
 | Numbers | Thousands separated by commas. Byte sizes are exact where measured; "about" marks a rounded value |
 
 ## 9.2 Glossary
@@ -5745,30 +5788,30 @@ Terms are grouped by domain and defined as this specification uses them. The doc
 ### 9.2.1 Runtime, Protocol and Network Terms
 
 | Term | Definition | Main Sections |
-|---|---|---|
-| `::` (IPv6 unspecified address) | The wildcard address the listener binds when `listen` gets no host argument. It accepts connections on every interface, over both IPv6 and IPv4 | 2.4.3, 5.1.1, 8.5.1 |
-| Loopback address (`127.0.0.1`) | An address reachable only from the same host. In this system it appears only as display text in the readiness line, not as the bind address | AA-04 (5.1.1), 8.5.1.2 |
-| Bind | Attaching a listening socket to an address and port. Line 5 does this with `listen(3000)` | 4.1.1 (D2) |
+| --- | --- | --- |
+| :: (IPv6 unspecified address) | The wildcard address the listener binds when listen gets no host argument. It accepts connections on every interface, over both IPv6 and IPv4 | 2.4.3, 5.1.1, 8.5.1 |
+| Loopback address (127.0.0.1) | An address reachable only from the same host. In this system it appears only as display text in the readiness line, not as the bind address | AA-04 (5.1.1), 8.5.1.2 |
+| Bind | Attaching a listening socket to an address and port. Line 10 does this with listen(3000) | 4.1.1 (D2) |
 | Listen backlog | The kernel queue of completed TCP connections waiting for the process to accept them. It explains why a TCP connect still succeeds while the process is stopped | 6.5.3.1 |
 | Network namespace | An isolated copy of a host's network stack, as used by containers and pods. The only way to run more than one instance on port 3000 on one machine | 8.2.5, 8.5.3 |
-| CommonJS | Node.js's original module system: synchronous `require` and `module.exports`. The default for a `.js` file when no `package.json` sets `"type"` | 3.1, 9.1.3 |
-| Module resolution | The CommonJS loader's search for a bare name such as `lodash` through the `node_modules` folders in the script's directory and each parent directory | 3.3.3, 4.1.1 |
-| Module cache | The loader's per-process store (`require.cache`) that keeps each loaded module, here `lodash` and `http`, until exit | 4.3.1, 5.3.4 |
+| CommonJS | Node.js's original module system: synchronous require and module.exports. The default for a .js file when no package.json sets "type" | 3.1, 9.1.3 |
+| Module resolution | The CommonJS loader's search for a bare name such as lodash through the node_modules folders in the script's directory and each parent directory | 3.3.3, 4.1.1 |
+| Module cache | The loader's per-process store (require.cache) that keeps each loaded module, here lodash and http, until exit | 4.3.1, 5.3.4 |
 | Event loop | The single-threaded scheduler that runs every JavaScript callback in the process. A blocked loop stops all service | 5.1.1, 5.3.1 |
 | V8 | The JavaScript engine embedded in Node.js. It also produces the block counters used for coverage | 3.2.1, 6.6.2.4 |
-| llhttp | The HTTP/1.x parser embedded in Node.js. It produces the `400` and `431` rejections before the handler runs | 3.2.1, 6.4.3.4 |
+| llhttp | The HTTP/1.x parser embedded in Node.js. It produces the 400 and 431 rejections before the handler runs | 3.2.1, 6.4.3.4 |
 | libuv | The C library behind the event loop and TCP socket I/O | 3.2.1 |
-| Node.js HTTP layer | The runtime's `http` internals: parsing, default status and headers, limits, timeouts and keep-alive. The fifth component in Section 5.1.2; not implemented in the repository | 5.1.2 |
-| Keep-alive (persistent connection) | HTTP/1.1 reuse of one TCP connection for several requests. Advertised as `Keep-Alive: timeout=5`; idle sockets close after about 6 s | 4.1, 9.1.4 |
-| Connection checker | The Node.js timer that enforces `headersTimeout` and `requestTimeout` every 30,000 ms, which gives the 60–90 s window for `408` | 4.1.2, 9.1.4 |
-| `headersTimeout` / `requestTimeout` | The time limits for receiving the request headers (60 s) and the whole request (300 s) | 3.2.1, 4.3.2 (E-05) |
-| `HEAD` request | An HTTP method that returns the status line and headers without a body. Decision point D6 | 4.1.1, 2.2 (F-002-RQ-004) |
-| `Content-Length` | The response header that gives the body size in bytes, here 14 | 1.2.3, 9.1.1 |
-| `Content-Type` | The response header that declares the media type. This server never sends it | 1.2.1, 6.4.4.5 |
-| `Expect: 100-continue` | A client request to confirm acceptance before sending a body. Node.js answers `100 Continue` automatically | 6.3, 6.6.3.2 |
-| HTTP/2 prior knowledge | A client that opens with the HTTP/2 preface and no upgrade. This server answers `400` and closes the socket | 6.3, 6.5.3.1 |
-| ClientHello | The first message of a TLS handshake. Sent to this plaintext server, it gets `HTTP/1.1 400 Bad Request` | 6.4.4.2 |
-| Request smuggling | An attack that exploits disagreement over request boundaries, for example a request carrying both `Content-Length` and `Transfer-Encoding`. The parser rejects it with `400` | 6.4.1, 6.4.3.4 |
+| Node.js HTTP layer | The runtime's http internals: parsing, default status and headers, limits, timeouts and keep-alive. The fifth component in Section 5.1.2; not implemented in the repository | 5.1.2 |
+| Keep-alive (persistent connection) | HTTP/1.1 reuse of one TCP connection for several requests. Advertised as Keep-Alive: timeout=5; idle sockets close after about 6 s | 4.1, 9.1.4 |
+| Connection checker | The Node.js timer that enforces headersTimeout and requestTimeout every 30,000 ms, which gives the 60–90 s window for 408 | 4.1.2, 9.1.4 |
+| headersTimeout / requestTimeout | The time limits for receiving the request headers (60 s) and the whole request (300 s) | 3.2.1, 4.3.2 (E-05) |
+| HEAD request | An HTTP method that returns the status line and headers without a body. Decision point D6 | 4.1.1, 2.2 (F-002-RQ-004) |
+| Content-Length | The response header that gives the body size in bytes, here 14 | 1.2.3, 9.1.1 |
+| Content-Type | The response header that declares the media type. This server never sends it | 1.2.1, 6.4.4.5 |
+| Expect: 100-continue | A client request to confirm acceptance before sending a body. Node.js answers 100 Continue automatically | 6.3, 6.6.3.2 |
+| HTTP/2 prior knowledge | A client that opens with the HTTP/2 preface and no upgrade. This server answers 400 and closes the socket | 6.3, 6.5.3.1 |
+| ClientHello | The first message of a TLS handshake. Sent to this plaintext server, it gets HTTP/1.1 400 Bad Request | 6.4.4.2 |
+| Request smuggling | An attack that exploits disagreement over request boundaries, for example a request carrying both Content-Length and Transfer-Encoding. The parser rejects it with 400 | 6.4.1, 6.4.3.4 |
 | Reverse proxy | A server in front of the process that forwards client requests to it. The usual place for TLS, access logs and rate limits | 6.4.6.3, 8.5.1 |
 | TLS termination | Decrypting TLS at a proxy or load balancer and forwarding plain HTTP to the process | 6.4.4, 8.6.4 |
 | Load balancer | A component that spreads traffic across instances. Needed for any multi-host, blue-green, rolling or canary deployment | 5.4.5, 8.4.3.1 |
@@ -5776,21 +5819,21 @@ Terms are grouped by domain and defined as this specification uses them. The doc
 ### 9.2.2 Dependency, Build and Release Terms
 
 | Term | Definition | Main Sections |
-|---|---|---|
-| lodash | A general-purpose JavaScript utility library. Line 1 loads it into `_`, which is never used | 3.3, 2.2 (F-005) |
-| npm public registry | `registry.npmjs.org`, the package source for `lodash`. Contacted only at install and audit time | 3.3.1, 8.5.5 |
-| Dist-tag (`latest`) | A registry label that points to a version. `latest` points to lodash 4.18.1 | 3.3.2 |
-| Package manifest | `package.json`: declares dependencies, `engines` and scripts. Absent from the repository | 3.6.6, 8.3.2 |
-| `engines` | The manifest field that declares supported Node.js versions, for example `>=22` | 8.3.2 |
-| Caret range (`^4.18.1`) | A semantic-versioning range that accepts 4.18.1 and any later 4.x release | 3.3.3 |
-| Lockfile | `package-lock.json`: records the exact resolved version, tarball URL and integrity hash of each dependency | 3.3.3, 8.3.3 |
-| Integrity hash | The `sha512-…` digest in the lockfile, which npm checks against each downloaded tarball | 3.3.3, 8.6.4 |
-| `npm ci` | A clean install that follows the lockfile exactly and fails if it disagrees with the manifest | 8.3.2, 8.4.2 |
-| `npm audit` | A check of installed packages against the public advisory database | 3.3.4, 8.3.4 (G3) |
+| --- | --- | --- |
+| lodash | A general-purpose JavaScript utility library. Line 5 loads it into _, which is never used | 3.3, 2.2 (F-005) |
+| npm public registry | registry.npmjs.org, the package source for lodash. Contacted only at install and audit time | 3.3.1, 8.5.5 |
+| Dist-tag (latest) | A registry label that points to a version. latest points to lodash 4.18.1 | 3.3.2 |
+| Package manifest | package.json: declares dependencies, engines and scripts. Absent from the repository | 3.6.6, 8.3.2 |
+| engines | The manifest field that declares supported Node.js versions, for example >=22 | 8.3.2 |
+| Caret range (^4.18.1) | A semantic-versioning range that accepts 4.18.1 and any later 4.x release | 3.3.3 |
+| Lockfile | package-lock.json: records the exact resolved version, tarball URL and integrity hash of each dependency | 3.3.3, 8.3.3 |
+| Integrity hash | The sha512-… digest in the lockfile, which npm checks against each downloaded tarball | 3.3.3, 8.6.4 |
+| npm ci | A clean install that follows the lockfile exactly and fails if it disagrees with the manifest | 8.3.2, 8.4.2 |
+| npm audit | A check of installed packages against the public advisory database | 3.3.4, 8.3.4 (G3) |
 | Transitive dependency | A dependency of a dependency. lodash has none | 3.3.1 |
-| Advisory range | The package versions a security advisory affects, for example `>=4.0.0 <=4.17.23` | 3.3.4 |
-| Code injection (CWE-94) | Running attacker-controlled input as code. Here, through `_.template` in affected lodash versions | 3.3.4 |
-| Prototype pollution (CWE-1321) | Changing `Object.prototype` through crafted property paths. Here, through `_.unset` and `_.omit` in affected versions | 3.3.4 |
+| Advisory range | The package versions a security advisory affects, for example >=4.0.0 <=4.17.23 | 3.3.4 |
+| Code injection (CWE-94) | Running attacker-controlled input as code. Here, through _.template in affected lodash versions | 3.3.4 |
+| Prototype pollution (CWE-1321) | Changing Object.prototype through crafted property paths. Here, through _.unset and _.omit in affected versions | 3.3.4 |
 | Release line | A Node.js major version, such as v22 "Jod". It moves through Current, Active LTS and Maintenance LTS phases to end of life | 3.2.3, 8.6.2 |
 | Commit SHA | The Git object ID of a commit. The unit of deployment, promotion and rollback | 8.4.1, 8.4.3.2 |
 | Web-flow signature | The OpenPGP signature GitHub applies to commits it creates through its web interface | 9.1.2 |
@@ -5805,46 +5848,46 @@ Terms are grouped by domain and defined as this specification uses them. The doc
 ### 9.2.3 Operations, Reliability and Security Terms
 
 | Term | Definition | Main Sections |
-|---|---|---|
-| Readiness line | The single stdout line `Server running at http://127.0.0.1:3000/` (41 bytes), printed once the bind succeeds | 2.2 (F-004), 6.5.1 |
-| Liveness / readiness probe | An external check that the process is up, or ready for traffic. Here they are the same check, `GET /`, because the process has no warm-up or dependencies | 6.5.3.1 |
+| --- | --- | --- |
+| Readiness line | The single stdout line Server running at http://127.0.0.1:3000/ (41 bytes), printed once the bind succeeds | 2.2 (F-004), 6.5.1 |
+| Liveness / readiness probe | An external check that the process is up, or ready for traffic. Here they are the same check, GET /, because the process has no warm-up or dependencies | 6.5.3.1 |
 | Wrong responder | A different process answering on port 3000. Detectable only by checking the 14-byte body (RB-05) | 6.5.4.1 |
 | Process supervisor | A host tool that starts, restarts and records the exit status of a process. None is in the repository | 3.6.3, 8.5.1 |
 | Fail fast | Ending the process at the first startup error with exit code 1, rather than retrying or degrading (ADR-006) | 5.1.1, 5.3.7 |
-| Fire-and-forget construction | `createServer(...).listen(...)` chained, with the instance never stored, so nothing can close or reconfigure it later | 5.1.1 |
+| Fire-and-forget construction | createServer(...).listen(...) chained, with the instance never stored, so nothing can close or reconfigure it later | 5.1.1 |
 | Graceful shutdown (drain) | Finishing in-flight requests before exit. Not implemented: signals end the process at once (E-07) | 4.3.2, 8.4.3.1 |
 | Stateless | Keeping no data between requests, so any two instances behave identically (ADR-004) | 5.3.3 |
 | Single point of failure | A component whose failure stops the whole service. Here, the one process on one host | 5.4.6, 8.6.3 |
 | Saturation | The point where the event loop uses 100% of one core, at about 80,000 requests/s in the verification environment | 6.1.3.5 |
 | Baseline | A measured reference value from the verification environment. Not a commitment or service level | 5.4.5, 6.5.3.2 |
 | Error budget | The share of failures a service-level objective tolerates. None is defined | 6.5.3.4 |
-| Exit status | The integer a process returns to its parent: `1` for an uncaught exception, or 128 plus the signal number on signal termination | 4.3.2, 9.1.4 |
+| Exit status | The integer a process returns to its parent: 1 for an uncaught exception, or 128 plus the signal number on signal termination | 4.3.2, 9.1.4 |
 | SIGSTOP / SIGCONT | Signals that pause and resume a process. Used to show that a TCP-only probe cannot detect a stalled server | 6.5.3.1, 6.5.4.4 |
-| Diagnostic report | A JSON file Node.js writes on a fatal exception when launched with `--report-uncaught-exception` | 6.5.1, 6.5.4.5 |
-| `NODE_DEBUG=http` | A Node.js environment variable that prints per-connection debug lines to stderr. It can expose credentials | 6.5.1, 6.5.2.3 |
+| Diagnostic report | A JSON file Node.js writes on a fatal exception when launched with --report-uncaught-exception | 6.5.1, 6.5.4.5 |
+| NODE_DEBUG=http | A Node.js environment variable that prints per-connection debug lines to stderr. It can expose credentials | 6.5.1, 6.5.2.3 |
 | Runbook | A step-by-step recovery procedure for one alert (RB-01 to RB-06) | 6.5.4.4 |
 | Post-mortem | A record, written after an incident, of its timeline, cause, recovery and follow-up | 6.5.4.5 |
-| Least privilege | Running the process under an account with only the rights it needs. Verified working as `nobody` | 6.4.1, 8.6.4 |
+| Least privilege | Running the process under an account with only the rights it needs. Verified working as nobody | 6.4.1, 8.6.4 |
 | Policy enforcement point | A place where an access or protocol rule is applied to a request (PEP 1 to PEP 4) | 6.4.3.4 |
 | Security zone | A region of uniform trust, separated from others by a boundary control (Zone 0 to Zone 4) | 6.4.5 |
 | Host-delegated | A control the repository leaves to the environment, such as firewalling, TLS or supervision (AA-05) | 6.4.6.1 |
-| Burstable instance | A cloud VM class that accumulates CPU credits during idle time, such as `t4g.nano`. Suited to one mostly idle process | 8.5.4 |
+| Burstable instance | A cloud VM class that accumulates CPU credits during idle time, such as t4g.nano. Suited to one mostly idle process | 8.5.4 |
 
 ### 9.2.4 Testing Terms
 
 | Term | Definition | Main Sections |
-|---|---|---|
-| Unit tier | Tests that load `server (1).js` in-process with `http.createServer` and `console.log` mocked. No socket is opened | 6.6.2 |
+| --- | --- | --- |
+| Unit tier | Tests that load server (1).js in-process with http.createServer and console.log mocked. No socket is opened | 6.6.2 |
 | Black-box tier | Tests that spawn the real script as a child process and observe only HTTP, stdout, stderr, exit codes and signals | 6.6.3 |
-| Test double (mock) | A stand-in for a collaborator that records calls, for example `mock.method(http, 'createServer', …)` | 6.6.2.3 |
-| System under test | The code a test exercises. Here, `server (1).js`, loaded in-process or spawned as a child | 6.6.6.2 |
+| Test double (mock) | A stand-in for a collaborator that records calls, for example mock.method(http, 'createServer', …) | 6.6.2.3 |
+| System under test | The code a test exercises. Here, server (1).js, loaded in-process or spawned as a child | 6.6.6.2 |
 | Coverage gate | A runner threshold (100% of lines, branches and functions) that fails the run when coverage is lower | 6.6.2.4, 6.6.5.1 |
 | Quality gate | A pipeline check that must pass before a merge (G1 to G6) | 6.6.5.4, 8.3.4 |
 | Performance smoke test | A short throughput check, 5,000 requests in under 5,000 ms, that catches gross regressions. Not a load test | 6.6.3.7 |
-| Reporter | A `node:test` output format: `spec`, `tap`, `dot`, `junit` or `lcov` | 6.6.4.4 |
+| Reporter | A node:test output format: spec, tap, dot, junit or lcov | 6.6.4.4 |
 | Flaky test | A test that fails intermittently without a code change. None observed in 20 runs | 6.6.4.6 |
-| Quarantine | Marking a test `skip` or `todo`, with a reason and a requirement ID, so the gap stays visible | 6.6.4.6 |
-| Serial execution | Running test files one at a time (`--test-concurrency=1`). Required because only one process can hold port 3000 | 6.6.4.3 |
+| Quarantine | Marking a test skip or todo, with a reason and a requirement ID, so the gap stays visible | 6.6.4.6 |
+| Serial execution | Running test files one at a time (--test-concurrency=1). Required because only one process can hold port 3000 | 6.6.4.3 |
 | Traceability matrix | The mapping from each requirement to its source lines and its verification | 2.5, 6.6.2.8 |
 
 ## 9.3 Acronyms
@@ -5854,8 +5897,8 @@ Acronyms are grouped by domain. Each entry notes where the specification uses it
 ### 9.3.1 Protocols, Networking and Web
 
 | Acronym | Expansion | Usage in This Document |
-|---|---|---|
-| API | Application Programming Interface | The Node.js `http` API; the one implicit HTTP endpoint (Sections 4.1.2, 6.3) |
+| --- | --- | --- |
+| API | Application Programming Interface | The Node.js http API; the one implicit HTTP endpoint (Sections 4.1.2, 6.3) |
 | CDN | Content Delivery Network | Not required (Section 8.2.2.1) |
 | CLI | Command-Line Interface | A CLI flag is a configuration option the code does not take (Section 5.3.6) |
 | CORS | Cross-Origin Resource Sharing | No CORS headers are sent (Sections 6.3, 6.4.3.3) |
@@ -5865,24 +5908,24 @@ Acronyms are grouped by domain. Each entry notes where the specification uses it
 | gRPC | gRPC Remote Procedure Calls | Not used (Section 5.3.2) |
 | HTML | HyperText Markup Language | The response carries no markup (Section 7.1) |
 | HTTP | Hypertext Transfer Protocol | HTTP/1.1 is the only protocol served |
-| HTTP/2 | HTTP version 2 | Not supported; prior-knowledge attempts get `400` (Sections 6.3, 6.5.3.1) |
+| HTTP/2 | HTTP version 2 | Not supported; prior-knowledge attempts get 400 (Sections 6.3, 6.5.3.1) |
 | HTTPS | HTTP Secure (HTTP over TLS) | Not served; used only for registry and GitHub access at install time (Section 8.5.1) |
 | IPC | Inter-Process Communication | None; everything runs in one process (Section 5.3.2) |
-| IPv4 / IPv6 | Internet Protocol version 4 / version 6 | The `::` listener accepts both (Section 8.5.1) |
+| IPv4 / IPv6 | Internet Protocol version 4 / version 6 | The :: listener accepts both (Section 8.5.1) |
 | JSX / TSX | JavaScript XML / TypeScript XML | No frontend source files (Section 7.1) |
 | LAN | Local Area Network | Possible client network (Section 8.5.1.2) |
 | MVC | Model–View–Controller | Not used (Section 5.1.1) |
 | TCP | Transmission Control Protocol | The transport for port 3000 |
 | TLS | Transport Layer Security | Absent from the process; host-delegated (AA-05) |
 | UI | User Interface | None required (Section 7.1) |
-| URL | Uniform Resource Locator | The readiness line advertises `http://127.0.0.1:3000/` |
+| URL | Uniform Resource Locator | The readiness line advertises http://127.0.0.1:3000/ |
 
 ### 9.3.2 Security and Compliance
 
 | Acronym | Expansion | Usage in This Document |
-|---|---|---|
+| --- | --- | --- |
 | ACL | Access Control List | None defined (Section 6.4.1) |
-| CL+TE | `Content-Length` plus `Transfer-Encoding` | A request-smuggling pattern the parser rejects (Sections 6.4.3.6, 6.6.2.6) |
+| CL+TE | Content-Length plus Transfer-Encoding | A request-smuggling pattern the parser rejects (Sections 6.4.3.6, 6.6.2.6) |
 | CSRF | Cross-Site Request Forgery | Not applicable: no sessions (Section 6.4.2.3) |
 | CVSS | Common Vulnerability Scoring System | lodash advisory scores, for example 8.1 (Section 3.3.4) |
 | CWE | Common Weakness Enumeration | CWE-94, CWE-1321 (Section 3.3.4) |
@@ -5906,7 +5949,7 @@ Acronyms are grouped by domain. Each entry notes where the specification uses it
 ### 9.3.3 Operations, Reliability and Delivery
 
 | Acronym | Expansion | Usage in This Document |
-|---|---|---|
+| --- | --- | --- |
 | ADR | Architecture Decision Record | ADR-001 to ADR-008 (Section 5.3.7) |
 | APM | Application Performance Monitoring | No APM agent; event-loop metrics unavailable (Section 6.5.2.1) |
 | CI | Continuous Integration | None configured (Section 3.6.4) |
@@ -5915,7 +5958,7 @@ Acronyms are grouped by domain. Each entry notes where the specification uses it
 | IaC | Infrastructure as Code | None (Sections 3.6.3, 8.1) |
 | ID | Identifier | All schemes in Section 9.1.5 |
 | KPI | Key Performance Indicator | None instrumented (Section 1.2.3) |
-| LCOV | LTP GCOV extension (line-coverage report format) | `reports/lcov.info` (Section 6.6.4.4) |
+| LCOV | LTP GCOV extension (line-coverage report format) | reports/lcov.info (Section 6.6.4.4) |
 | LTS | Long-Term Support | Node.js release phases (Section 3.2.3) |
 | N/A | Not Applicable | Control status value (Section 6.4.6.1) |
 | p50 / p95 / p99 | 50th / 95th / 99th percentile | Latency baselines (Section 6.5.3.2) |
@@ -5923,13 +5966,13 @@ Acronyms are grouped by domain. Each entry notes where the specification uses it
 | RTO | Recovery Time Objective | Not defined (Sections 5.4.6, 8.6.3) |
 | SLA | Service Level Agreement | None defined (Sections 5.1.4, 6.5.3.4) |
 | SLO | Service Level Objective | None defined (Section 6.5.3.4) |
-| TAP | Test Anything Protocol | `node:test` event and reporter format (Sections 6.6.4.4, 6.6.6.3) |
+| TAP | Test Anything Protocol | node:test event and reporter format (Sections 6.6.4.4, 6.6.6.3) |
 
 ### 9.3.4 Platforms, Formats and Units
 
 | Acronym | Expansion | Usage in This Document |
-|---|---|---|
-| Arm64 | 64-bit Arm architecture | `t4g` instance family; `linux-arm64` Node.js build (Section 8.5.4) |
+| --- | --- | --- |
+| Arm64 | 64-bit Arm architecture | t4g instance family; linux-arm64 Node.js build (Section 8.5.4) |
 | ASCII | American Standard Code for Information Interchange | Character set of the source file (Section 9.1.1) |
 | AWS | Amazon Web Services | Pricing reference only; not used by the system (Sections 3.4, 8.5.4) |
 | BOM | Byte Order Mark | Absent from the source file (Section 9.1.1) |
@@ -5944,7 +5987,7 @@ Acronyms are grouped by domain. Each entry notes where the specification uses it
 | ms | Millisecond | Latency and timeout values |
 | npm | Node Package Manager (historical expansion; the project now treats the name as a non-acronym) | Package manager and registry |
 | OS | Operating System | Host platform; process identity |
-| PID | Process Identifier | `/proc/<pid>` paths; log labelling (Section 6.5.2) |
+| PID | Process Identifier | /proc/ paths; log labelling (Section 6.5.2) |
 | POSIX | Portable Operating System Interface | Host requirement for signals and exit codes (Section 8.3.1) |
 | RAM | Random-Access Memory | Verification host capacity (Section 9.1.6) |
 | req/s | Requests per second | Throughput baselines |
@@ -5955,18 +5998,18 @@ Acronyms are grouped by domain. Each entry notes where the specification uses it
 | UTF-8 | Unicode Transformation Format, 8-bit | Body encoding (Section 5.1.3) |
 | vCPU | Virtual Central Processing Unit | Instance sizing (Section 8.5.2) |
 | VM | Virtual Machine | Possible host type (Sections 8.2.3, 8.5.1.1) |
-| VmRSS / VmHWM | Linux `/proc` fields: virtual-memory resident set size / high-water mark (peak RSS) | Memory measurement (Section 6.5.2.1) |
+| VmRSS / VmHWM | Linux /proc fields: virtual-memory resident set size / high-water mark (peak RSS) | Memory measurement (Section 6.5.2.1) |
 | x86_64 | 64-bit x86 architecture | Verification platform (Section 9.1.6) |
-| XML | Extensible Markup Language | `reports/junit.xml` (Section 6.6.4.4) |
+| XML | Extensible Markup Language | reports/junit.xml (Section 6.6.4.4) |
 
 ### 9.3.5 Error Codes and Signals
 
 | Code or Signal | Expansion | Usage in This Document |
-|---|---|---|
-| `EADDRINUSE` | Error: address in use (POSIX `errno`) | Port 3000 already taken; E-02 |
-| `ECONNREFUSED` | Error: connection refused (POSIX `errno`) | Client view of a stopped server; E-08 (Sections 6.6.3.5, 8.4.3.1) |
-| `MODULE_NOT_FOUND` | Node.js CommonJS loader error: module not found | `lodash` missing; E-01 |
-| `ERR_MODULE_NOT_FOUND` | Node.js module-loader error: module not found | Raised by `mock.module` when `lodash` is absent (Section 6.6.2.3) |
+| --- | --- | --- |
+| EADDRINUSE | Error: address in use (POSIX errno) | Port 3000 already taken; E-02 |
+| ECONNREFUSED | Error: connection refused (POSIX errno) | Client view of a stopped server; E-08 (Sections 6.6.3.5, 8.4.3.1) |
+| MODULE_NOT_FOUND | Node.js CommonJS loader error: module not found | lodash missing; E-01 |
+| ERR_MODULE_NOT_FOUND | Node.js module-loader error: module not found | Raised by mock.module when lodash is absent (Section 6.6.2.3) |
 | SIGINT | Signal interrupt (signal 2, Ctrl+C) | Exit status 130 |
 | SIGTERM | Signal terminate (signal 15) | Exit status 143 |
 | SIGKILL | Signal kill (signal 9) | Exit status 137 |
@@ -5976,8 +6019,10 @@ Acronyms are grouped by domain. Each entry notes where the specification uses it
 
 **Repository files and folders**
 
-- `server (1).js` - Source of every file-level fact in Section 9.1: 185 bytes over 5 LF-terminated lines (lengths 28/0/44/29/79), ASCII only with no byte order mark, Git mode `100644`, blob `8869fb6d2b8ccb3bb83fb6822325d12bbea38480`, and SHA-256 `7f27a666…a203`. Also the byte layouts of the 14-byte body (line 4) and the 41-byte readiness line (line 5). It confirmed the invocation semantics: `node --check` passes; direct execution fails with exit 126 (no execute bit) or exit 2 (no `#!` line); no `'use strict'`; no exports. It is also the origin of the code identifiers defined in the glossary.
-- `` (repository root) - Holds only `server (1).js` on every ref (`main`, `0610_02`, `origin/main`, `origin/0610_02`). Its Git history is the single root commit `f0ba73b`: author `lakshya-blitzy`, committer `GitHub <noreply@github.com>`, 2026-10-06 12:52:01 UTC, with a valid GitHub web-flow signature (key `B5690EEEBB952194`). The object database holds three objects, and there are no tags.
+- `server (1).js` - Source of every file-level fact in Section 9.1: 426 bytes over 10 LF-terminated lines (lengths 59/59/59/0/28/0/59/44/29/79), ASCII only with no byte order mark, Git mode `100644`, blob `172e6692d08cc6f34c5c051cb06a24f5e76da450`, and SHA-256 `0137ee95…5736`. Also the byte layouts of the 14-byte body (line 9) and the 41-byte readiness line (line 10). It confirmed the invocation semantics: `node --check` passes; direct execution fails with exit 126 (no execute bit) or exit 2 (no `#!` line); no `'use strict'`; no exports. It is also the origin of the code identifiers defined in the glossary.
+- `README.md` - Source of the tracked install and run steps (`npm install lodash`, `node "server (1).js"`), and of the file-level facts in Section 9.1.1: 76 bytes over 5 LF-terminated lines (lengths 15/0/29/0/27), mode `100644`, blob `ef61c677749acf4b7b4b8b1c585f6a5e131efd3b`, and SHA-256 `da48b4c7…b20be`.
+- `blitzy/documentation/Technical Specifications.md` - 425,826 bytes, blob `e3c37c5dc86335d7beab4ad1b1f55e0aefb488d6`, present on `0610_02`.
+- \`\` (repository root) - Holds `server (1).js`, `README.md` and the `blitzy/` documentation folder on `0610_02` and `origin/0610_02` at `93f60af`; `main` and `origin/main` at `f0ba73b` hold only `server (1).js`. Its Git history holds nine commits: the root commit `f0ba73b` (author `lakshya-blitzy`, committer `GitHub <noreply@github.com>`, 2026-10-06 12:52:01 UTC, still the head of `main`) and the current head `93f60af` ('Merge pull request #1', 2026-10-12 11:33:18 UTC, merging `ea9f159` and `8029bcb`). The commits GitHub created - `f0ba73b`, `8fc5d62`, `ea9f159` and `93f60af` - carry a valid GitHub web-flow signature (key `B5690EEEBB952194`); the four Blitzy Agent commits are unsigned. The object database holds 28 objects in one pack, and there are no tags.
 
 **Technical Specification cross-references**
 
@@ -6002,5 +6047,4 @@ Acronyms are grouped by domain. Each entry notes where the specification uses it
 
 **Web sources**
 
-- [web] `https://github.com/web-flow.gpg` - GitHub's published web-flow public key (`GitHub <noreply@github.com>`, key ID `B5690EEEBB952194`). Checked against it, the signature on commit `f0ba73b` verified as good (Section 9.1.2).
-
+- \[web\] `https://github.com/web-flow.gpg` - GitHub's published web-flow public key (`GitHub <noreply@github.com>`, key ID `B5690EEEBB952194`). Checked against it, the signatures on commits `f0ba73b`, `8fc5d62`, `ea9f159` and `93f60af` verified as good (Section 9.1.2).
