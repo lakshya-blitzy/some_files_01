@@ -1,0 +1,7 @@
+{
+  "name": "some_files_01",
+  "version": "1.0.0",
+  "dependencies": {
+    "express": "5"
+  }
+}
